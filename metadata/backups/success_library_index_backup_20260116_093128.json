@@ -1,0 +1,79 @@
+{
+  "library_info": {
+    "name": "Success Library",
+    "version": "v0.1-pilot",
+    "last_updated": "2026-01-16",
+    "updated_by": "",
+    "description": "Centralized repository of success metric definitions and calculation logic"
+  },
+  "metrics": [
+    {
+      "metric_id": "VVD_ACQ_001",
+      "metric_name": "Acquisition Success",
+      "product": "VVD",
+      "line_of_business": "",
+      "metric_type": "Acquisition",
+      "pillar": "Conversion",
+      "business_definition": "",
+      "code_path": "code/VVD/VVD_ACQ_001.md",
+      "source_tables": [],
+      "staged_source": "",
+      "grain": "Client",
+      "measurement_window_days": null,
+      "owner": "",
+      "version": "v1.0",
+      "campaigns_using": ["VCN", "VDA"]
+    },
+    {
+      "metric_id": "VVD_ACT_001",
+      "metric_name": "Activation Success",
+      "product": "VVD",
+      "line_of_business": "",
+      "metric_type": "Activation",
+      "pillar": "Conversion",
+      "business_definition": "",
+      "code_path": "code/VVD/VVD_ACT_001.md",
+      "source_tables": [],
+      "staged_source": "",
+      "grain": "Client",
+      "measurement_window_days": null,
+      "owner": "",
+      "version": "v1.0",
+      "campaigns_using": ["VDT"]
+    },
+    {
+      "metric_id": "VVD_USG_001",
+      "metric_name": "Usage Success",
+      "product": "VVD",
+      "line_of_business": "",
+      "metric_type": "Usage",
+      "pillar": "Engagement",
+      "business_definition": "",
+      "code_path": "code/VVD/VVD_USG_001.md",
+      "source_tables": [],
+      "staged_source": "",
+      "grain": "Client",
+      "measurement_window_days": null,
+      "owner": "",
+      "version": "v1.0",
+      "campaigns_using": ["VUT"]
+    },
+    {
+      "metric_id": "VVD_PRV_001",
+      "metric_name": "Provisioning Success",
+      "product": "VVD",
+      "line_of_business": "",
+      "metric_type": "Provisioning",
+      "pillar": "Conversion",
+      "business_definition": "",
+      "code_path": "code/VVD/VVD_PRV_001.md",
+      "source_tables": [],
+      "staged_source": "",
+      "grain": "Client",
+      "measurement_window_days": null,
+      "owner": "",
+      "version": "v1.0",
+      "campaigns_using": ["VAW", "VUI"]
+    }
+  ]
+}

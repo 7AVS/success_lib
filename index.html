@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Success Library</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .header .version {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .filters select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .result-count {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th {
+            background: #f1f3f4;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #ddd;
+            white-space: nowrap;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .col-id {
+            font-family: monospace;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .col-name {
+            font-weight: 500;
+        }
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .tag-type {
+            background: #e8f4fc;
+            color: #1a73e8;
+        }
+        .tag-pillar {
+            background: #fce8e8;
+            color: #d93025;
+        }
+        .empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Buttons */
+        .btn-code {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-code:hover {
+            background: #1557b0;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .metric-details {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .metric-details p {
+            margin-bottom: 8px;
+        }
+        .metric-details code {
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        /* Code tabs */
+        .code-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .tab-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: #f1f3f4;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            font-size: 13px;
+        }
+        .tab-btn.active {
+            background: #2d2d2d;
+            color: white;
+            border-color: #2d2d2d;
+        }
+        .code-panel {
+            display: none;
+            position: relative;
+        }
+        .code-panel.active {
+            display: block;
+        }
+        .code-panel pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 0 4px 4px 4px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .btn-copy {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 10;
+        }
+        .btn-copy:hover {
+            background: #555;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Success Library</h1>
+            <div class="version">v0.1-pilot | Last updated: 2026-01-16</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by metric ID, name, or campaign...">
+            </div>
+            <div class="filters">
+                <select id="productFilter">
+                    <option value="">All Products</option>
+                    <option value="CC">CC</option>
+<option value="MTG">MTG</option>
+<option value="VVD">VVD</option>
+                </select>
+                <select id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="Acquisition">Acquisition</option>
+<option value="Activation">Activation</option>
+<option value="Provisioning">Provisioning</option>
+<option value="Usage">Usage</option>
+                </select>
+                <select id="pillarFilter">
+                    <option value="">All Pillars</option>
+                    <option value="Conversion">Conversion</option>
+<option value="Engagement">Engagement</option>
+                </select>
+            </div>
+            <div class="result-count">
+                <span id="resultCount">6</span> metrics
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric ID</th>
+                        <th>Name</th>
+                        <th>Product</th>
+                        <th>LOB</th>
+                        <th>Type</th>
+                        <th>Pillar</th>
+                        <th>Campaigns</th>
+                        <th>Grain</th>
+                        <th>Owner</th>
+                        <th>Version</th>
+                        <th>Code</th>
+                    </tr>
+                </thead>
+                <tbody id="metricsTable">
+                    
+            <tr class="metric-row" data-metric-id="VVD_ACQ_001"
+                data-product="VVD"
+                data-type="Acquisition"
+                data-pillar="Conversion">
+                <td class="col-id">VVD_ACQ_001</td>
+                <td class="col-name">Acquisition Success</td>
+                <td class="col-product">VVD</td>
+                <td class="col-lob">Debit Cards</td>
+                <td class="col-type"><span class="tag tag-type">Acquisition</span></td>
+                <td class="col-pillar"><span class="tag tag-pillar">Conversion</span></td>
+                <td class="col-campaigns">VCN, VDA</td>
+                <td class="col-grain">Client</td>
+                <td class="col-owner">John Smith</td>
+                <td class="col-version">v1.0</td>
+                <td class="col-actions">
+                    <button class="btn-code" onclick="showCode('VVD_ACQ_001')">View Code</button>
+                </td>
+            </tr>
+            <tr class="metric-row" data-metric-id="VVD_ACT_001"
+                data-product="VVD"
+                data-type="Activation"
+                data-pillar="Conversion">
+                <td class="col-id">VVD_ACT_001</td>
+                <td class="col-name">Activation Success</td>
+                <td class="col-product">VVD</td>
+                <td class="col-lob">Debit Cards</td>
+                <td class="col-type"><span class="tag tag-type">Activation</span></td>
+                <td class="col-pillar"><span class="tag tag-pillar">Conversion</span></td>
+                <td class="col-campaigns">VDT</td>
+                <td class="col-grain">Client</td>
+                <td class="col-owner">Jane Doe</td>
+                <td class="col-version">v1.0</td>
+                <td class="col-actions">
+                    <button class="btn-code" onclick="showCode('VVD_ACT_001')">View Code</button>
+                </td>
+            </tr>
+            <tr class="metric-row" data-metric-id="VVD_USG_001"
+                data-product="VVD"
+                data-type="Usage"
+                data-pillar="Engagement">
+                <td class="col-id">VVD_USG_001</td>
+                <td class="col-name">Usage Success</td>
+                <td class="col-product">VVD</td>
+                <td class="col-lob"><span class="empty">-</span></td>
+                <td class="col-type"><span class="tag tag-type">Usage</span></td>
+                <td class="col-pillar"><span class="tag tag-pillar">Engagement</span></td>
+                <td class="col-campaigns">VUT</td>
+                <td class="col-grain">Client</td>
+                <td class="col-owner"><span class="empty">-</span></td>
+                <td class="col-version">v1.0</td>
+                <td class="col-actions">
+                    <button class="btn-code" onclick="showCode('VVD_USG_001')">View Code</button>
+                </td>
+            </tr>
+            <tr class="metric-row" data-metric-id="VVD_PRV_001"
+                data-product="VVD"
+                data-type="Provisioning"
+                data-pillar="Conversion">
+                <td class="col-id">VVD_PRV_001</td>
+                <td class="col-name">Provisioning Success</td>
+                <td class="col-product">VVD</td>
+                <td class="col-lob"><span class="empty">-</span></td>
+                <td class="col-type"><span class="tag tag-type">Provisioning</span></td>
+                <td class="col-pillar"><span class="tag tag-pillar">Conversion</span></td>
+                <td class="col-campaigns">VAW, VUI</td>
+                <td class="col-grain">Client</td>
+                <td class="col-owner"><span class="empty">-</span></td>
+                <td class="col-version">v1.0</td>
+                <td class="col-actions">
+                    <button class="btn-code" onclick="showCode('VVD_PRV_001')">View Code</button>
+                </td>
+            </tr>
+            <tr class="metric-row" data-metric-id="CC_ACQ_001"
+                data-product="CC"
+                data-type="Acquisition"
+                data-pillar="Conversion">
+                <td class="col-id">CC_ACQ_001</td>
+                <td class="col-name">Credit Card Acquisition Success</td>
+                <td class="col-product">CC</td>
+                <td class="col-lob">Cards</td>
+                <td class="col-type"><span class="tag tag-type">Acquisition</span></td>
+                <td class="col-pillar"><span class="tag tag-pillar">Conversion</span></td>
+                <td class="col-campaigns">CCA, CCB, CCC</td>
+                <td class="col-grain">Client</td>
+                <td class="col-owner">Jane Doe</td>
+                <td class="col-version">v1.0</td>
+                <td class="col-actions">
+                    <button class="btn-code" onclick="showCode('CC_ACQ_001')">View Code</button>
+                </td>
+            </tr>
+            <tr class="metric-row" data-metric-id="MTG_ACQ_001"
+                data-product="MTG"
+                data-type="Acquisition"
+                data-pillar="Conversion">
+                <td class="col-id">MTG_ACQ_001</td>
+                <td class="col-name">Mortgage Acquisition Success</td>
+                <td class="col-product">MTG</td>
+                <td class="col-lob">Lending</td>
+                <td class="col-type"><span class="tag tag-type">Acquisition</span></td>
+                <td class="col-pillar"><span class="tag tag-pillar">Conversion</span></td>
+                <td class="col-campaigns">MCA, MCB</td>
+                <td class="col-grain">Client</td>
+                <td class="col-owner">Test User</td>
+                <td class="col-version">v1.0</td>
+                <td class="col-actions">
+                    <button class="btn-code" onclick="showCode('MTG_ACQ_001')">View Code</button>
+                </td>
+            </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Code Modals -->
+    
+        <div id="modal-VVD_ACQ_001" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>VVD_ACQ_001 - Acquisition Success</h2>
+                    <button class="modal-close" onclick="closeModal('VVD_ACQ_001')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="metric-details">
+                        <p><strong>Business Definition:</strong> Measures successful Virtual Visa Debit card acquisition</p>
+                        <p><strong>Source Tables:</strong> To be defined</p>
+                        <p><strong>Code File:</strong> <code>code/VVD/VVD_ACQ_001.md</code></p>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="tab-btn active" onclick="switchTab('VVD_ACQ_001', 'sql')">SQL (Data Warehouse)</button>
+                        <button class="tab-btn" onclick="switchTab('VVD_ACQ_001', 'pyspark')">PySpark (Hive)</button>
+                    </div>
+                    <div id="code-VVD_ACQ_001-sql" class="code-panel active">
+                        <button class="btn-copy" onclick="copyCode('VVD_ACQ_001', 'sql')">Copy</button>
+                        <pre><code>-- Acquisition Success Logic
+-- [TO BE IMPLEMENTED]
+
+SELECT
+    CLNT_NO,
+    -- acquisition success calculation here
+    NULL AS ACQUISITION_SUCCESS
+FROM
+    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)
+WHERE
+    -- conditions here
+;</code></pre>
+                    </div>
+                    <div id="code-VVD_ACQ_001-pyspark" class="code-panel">
+                        <button class="btn-copy" onclick="copyCode('VVD_ACQ_001', 'pyspark')">Copy</button>
+                        <pre><code># Acquisition Success Logic
+# [TO BE IMPLEMENTED]
+
+acquisition_df = spark.sql(&quot;&quot;&quot;
+    SELECT
+        CLNT_NO,
+        -- acquisition success calculation here
+        NULL AS ACQUISITION_SUCCESS
+    FROM
+        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)
+    WHERE
+        -- conditions here
+&quot;&quot;&quot;)
+
+# Alternative: DataFrame API if needed
+# acquisition_df = spark.table(&quot;hive_analytics.tactic_evnt_hist&quot;) \
+#     .select(&quot;CLNT_NO&quot;) \
+#     .withColumn(&quot;ACQUISITION_SUCCESS&quot;, lit(None))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modal-VVD_ACT_001" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>VVD_ACT_001 - Activation Success</h2>
+                    <button class="modal-close" onclick="closeModal('VVD_ACT_001')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="metric-details">
+                        <p><strong>Business Definition:</strong> Measures successful activation of Virtual Visa Debit card after issuance</p>
+                        <p><strong>Source Tables:</strong> To be defined</p>
+                        <p><strong>Code File:</strong> <code>code/VVD/VVD_ACT_001.md</code></p>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="tab-btn active" onclick="switchTab('VVD_ACT_001', 'sql')">SQL (Data Warehouse)</button>
+                        <button class="tab-btn" onclick="switchTab('VVD_ACT_001', 'pyspark')">PySpark (Hive)</button>
+                    </div>
+                    <div id="code-VVD_ACT_001-sql" class="code-panel active">
+                        <button class="btn-copy" onclick="copyCode('VVD_ACT_001', 'sql')">Copy</button>
+                        <pre><code>-- Activation Success Logic
+-- [TO BE IMPLEMENTED]
+
+SELECT
+    CLNT_NO,
+    -- activation success calculation here
+    NULL AS ACTIVATION_SUCCESS
+FROM
+    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)
+WHERE
+    -- conditions here
+;</code></pre>
+                    </div>
+                    <div id="code-VVD_ACT_001-pyspark" class="code-panel">
+                        <button class="btn-copy" onclick="copyCode('VVD_ACT_001', 'pyspark')">Copy</button>
+                        <pre><code># Activation Success Logic
+# [TO BE IMPLEMENTED]
+
+activation_df = spark.sql(&quot;&quot;&quot;
+    SELECT
+        CLNT_NO,
+        -- activation success calculation here
+        NULL AS ACTIVATION_SUCCESS
+    FROM
+        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)
+    WHERE
+        -- conditions here
+&quot;&quot;&quot;)
+
+# Alternative: DataFrame API if needed
+# activation_df = spark.table(&quot;hive_analytics.tactic_evnt_hist&quot;) \
+#     .select(&quot;CLNT_NO&quot;) \
+#     .withColumn(&quot;ACTIVATION_SUCCESS&quot;, lit(None))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modal-VVD_USG_001" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>VVD_USG_001 - Usage Success</h2>
+                    <button class="modal-close" onclick="closeModal('VVD_USG_001')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="metric-details">
+                        <p><strong>Business Definition:</strong> To be defined</p>
+                        <p><strong>Source Tables:</strong> To be defined</p>
+                        <p><strong>Code File:</strong> <code>code/VVD/VVD_USG_001.md</code></p>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="tab-btn active" onclick="switchTab('VVD_USG_001', 'sql')">SQL (Data Warehouse)</button>
+                        <button class="tab-btn" onclick="switchTab('VVD_USG_001', 'pyspark')">PySpark (Hive)</button>
+                    </div>
+                    <div id="code-VVD_USG_001-sql" class="code-panel active">
+                        <button class="btn-copy" onclick="copyCode('VVD_USG_001', 'sql')">Copy</button>
+                        <pre><code>-- Usage Success Logic
+-- [TO BE IMPLEMENTED]
+
+SELECT
+    CLNT_NO,
+    -- usage success calculation here
+    NULL AS USAGE_SUCCESS
+FROM
+    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)
+WHERE
+    -- conditions here
+;</code></pre>
+                    </div>
+                    <div id="code-VVD_USG_001-pyspark" class="code-panel">
+                        <button class="btn-copy" onclick="copyCode('VVD_USG_001', 'pyspark')">Copy</button>
+                        <pre><code># Usage Success Logic
+# [TO BE IMPLEMENTED]
+
+usage_df = spark.sql(&quot;&quot;&quot;
+    SELECT
+        CLNT_NO,
+        -- usage success calculation here
+        NULL AS USAGE_SUCCESS
+    FROM
+        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)
+    WHERE
+        -- conditions here
+&quot;&quot;&quot;)
+
+# Alternative: DataFrame API if needed
+# usage_df = spark.table(&quot;hive_analytics.tactic_evnt_hist&quot;) \
+#     .select(&quot;CLNT_NO&quot;) \
+#     .withColumn(&quot;USAGE_SUCCESS&quot;, lit(None))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modal-VVD_PRV_001" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>VVD_PRV_001 - Provisioning Success</h2>
+                    <button class="modal-close" onclick="closeModal('VVD_PRV_001')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="metric-details">
+                        <p><strong>Business Definition:</strong> To be defined</p>
+                        <p><strong>Source Tables:</strong> To be defined</p>
+                        <p><strong>Code File:</strong> <code>code/VVD/VVD_PRV_001.md</code></p>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="tab-btn active" onclick="switchTab('VVD_PRV_001', 'sql')">SQL (Data Warehouse)</button>
+                        <button class="tab-btn" onclick="switchTab('VVD_PRV_001', 'pyspark')">PySpark (Hive)</button>
+                    </div>
+                    <div id="code-VVD_PRV_001-sql" class="code-panel active">
+                        <button class="btn-copy" onclick="copyCode('VVD_PRV_001', 'sql')">Copy</button>
+                        <pre><code>-- Provisioning Success Logic
+-- [TO BE IMPLEMENTED]
+
+SELECT
+    CLNT_NO,
+    -- provisioning success calculation here
+    NULL AS PROVISIONING_SUCCESS
+FROM
+    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)
+WHERE
+    -- conditions here
+;</code></pre>
+                    </div>
+                    <div id="code-VVD_PRV_001-pyspark" class="code-panel">
+                        <button class="btn-copy" onclick="copyCode('VVD_PRV_001', 'pyspark')">Copy</button>
+                        <pre><code># Provisioning Success Logic
+# [TO BE IMPLEMENTED]
+
+provisioning_df = spark.sql(&quot;&quot;&quot;
+    SELECT
+        CLNT_NO,
+        -- provisioning success calculation here
+        NULL AS PROVISIONING_SUCCESS
+    FROM
+        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)
+    WHERE
+        -- conditions here
+&quot;&quot;&quot;)
+
+# Alternative: DataFrame API if needed
+# provisioning_df = spark.table(&quot;hive_analytics.tactic_evnt_hist&quot;) \
+#     .select(&quot;CLNT_NO&quot;) \
+#     .withColumn(&quot;PROVISIONING_SUCCESS&quot;, lit(None))</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modal-CC_ACQ_001" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>CC_ACQ_001 - Credit Card Acquisition Success</h2>
+                    <button class="modal-close" onclick="closeModal('CC_ACQ_001')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="metric-details">
+                        <p><strong>Business Definition:</strong> Measures successful credit card acquisition after campaign exposure</p>
+                        <p><strong>Source Tables:</strong> DGNV01.TACTIC_EVNT_IP_AR_HIST, CARDS.CC_APPLICATIONS</p>
+                        <p><strong>Code File:</strong> <code>code/CC/CC_ACQ_001.md</code></p>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="tab-btn active" onclick="switchTab('CC_ACQ_001', 'sql')">SQL (Data Warehouse)</button>
+                        <button class="tab-btn" onclick="switchTab('CC_ACQ_001', 'pyspark')">PySpark (Hive)</button>
+                    </div>
+                    <div id="code-CC_ACQ_001-sql" class="code-panel active">
+                        <button class="btn-copy" onclick="copyCode('CC_ACQ_001', 'sql')">Copy</button>
+                        <pre><code>-- Credit Card Acquisition Success Logic
+-- [TO BE IMPLEMENTED]
+
+SELECT
+    CLNT_NO,
+    -- credit card acquisition success calculation here
+    NULL AS CC_ACQUISITION_SUCCESS
+FROM
+    DGNV01.TACTIC_EVNT_IP_AR_HIST t
+    LEFT JOIN CARDS.CC_APPLICATIONS a ON t.CLNT_NO = a.CLNT_NO
+WHERE
+    -- conditions here
+;</code></pre>
+                    </div>
+                    <div id="code-CC_ACQ_001-pyspark" class="code-panel">
+                        <button class="btn-copy" onclick="copyCode('CC_ACQ_001', 'pyspark')">Copy</button>
+                        <pre><code># Credit Card Acquisition Success Logic
+# [TO BE IMPLEMENTED]
+
+cc_acquisition_df = spark.sql(&quot;&quot;&quot;
+    SELECT
+        CLNT_NO,
+        -- credit card acquisition success calculation here
+        NULL AS CC_ACQUISITION_SUCCESS
+    FROM
+        hive_analytics.tactic_evnt_hist t
+        LEFT JOIN hive_cards.cc_applications a ON t.CLNT_NO = a.CLNT_NO
+    WHERE
+        -- conditions here
+&quot;&quot;&quot;)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modal-MTG_ACQ_001" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>MTG_ACQ_001 - Mortgage Acquisition Success</h2>
+                    <button class="modal-close" onclick="closeModal('MTG_ACQ_001')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="metric-details">
+                        <p><strong>Business Definition:</strong> Measures successful mortgage origination after campaign exposure</p>
+                        <p><strong>Source Tables:</strong> LENDING.MORTGAGE_APPLICATIONS</p>
+                        <p><strong>Code File:</strong> <code>code/MTG/MTG_ACQ_001.md</code></p>
+                    </div>
+                    <div class="code-tabs">
+                        <button class="tab-btn active" onclick="switchTab('MTG_ACQ_001', 'sql')">SQL (Data Warehouse)</button>
+                        <button class="tab-btn" onclick="switchTab('MTG_ACQ_001', 'pyspark')">PySpark (Hive)</button>
+                    </div>
+                    <div id="code-MTG_ACQ_001-sql" class="code-panel active">
+                        <button class="btn-copy" onclick="copyCode('MTG_ACQ_001', 'sql')">Copy</button>
+                        <pre><code>-- Mortgage Acquisition Success Logic
+-- [TO BE IMPLEMENTED]
+
+SELECT
+    CLNT_NO,
+    -- mortgage acquisition success calculation here
+    NULL AS MTG_ACQUISITION_SUCCESS
+FROM
+    LENDING.MORTGAGE_APPLICATIONS
+WHERE
+    -- conditions here
+;</code></pre>
+                    </div>
+                    <div id="code-MTG_ACQ_001-pyspark" class="code-panel">
+                        <button class="btn-copy" onclick="copyCode('MTG_ACQ_001', 'pyspark')">Copy</button>
+                        <pre><code># Mortgage Acquisition Success Logic
+# [TO BE IMPLEMENTED]
+
+mtg_acquisition_df = spark.sql(&quot;&quot;&quot;
+    SELECT
+        CLNT_NO,
+        -- mortgage acquisition success calculation here
+        NULL AS MTG_ACQUISITION_SUCCESS
+    FROM
+        hive_lending.mortgage_applications
+    WHERE
+        -- conditions here
+&quot;&quot;&quot;)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        // Store code for copy functionality
+        const codeData = {"VVD_ACQ_001": {"sql": "-- Acquisition Success Logic\n-- [TO BE IMPLEMENTED]\n\nSELECT\n    CLNT_NO,\n    -- acquisition success calculation here\n    NULL AS ACQUISITION_SUCCESS\nFROM\n    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)\nWHERE\n    -- conditions here\n;", "pyspark": "# Acquisition Success Logic\n# [TO BE IMPLEMENTED]\n\nacquisition_df = spark.sql(\"\"\"\n    SELECT\n        CLNT_NO,\n        -- acquisition success calculation here\n        NULL AS ACQUISITION_SUCCESS\n    FROM\n        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)\n    WHERE\n        -- conditions here\n\"\"\")\n\n# Alternative: DataFrame API if needed\n# acquisition_df = spark.table(\"hive_analytics.tactic_evnt_hist\") \\\n#     .select(\"CLNT_NO\") \\\n#     .withColumn(\"ACQUISITION_SUCCESS\", lit(None))"}, "VVD_ACT_001": {"sql": "-- Activation Success Logic\n-- [TO BE IMPLEMENTED]\n\nSELECT\n    CLNT_NO,\n    -- activation success calculation here\n    NULL AS ACTIVATION_SUCCESS\nFROM\n    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)\nWHERE\n    -- conditions here\n;", "pyspark": "# Activation Success Logic\n# [TO BE IMPLEMENTED]\n\nactivation_df = spark.sql(\"\"\"\n    SELECT\n        CLNT_NO,\n        -- activation success calculation here\n        NULL AS ACTIVATION_SUCCESS\n    FROM\n        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)\n    WHERE\n        -- conditions here\n\"\"\")\n\n# Alternative: DataFrame API if needed\n# activation_df = spark.table(\"hive_analytics.tactic_evnt_hist\") \\\n#     .select(\"CLNT_NO\") \\\n#     .withColumn(\"ACTIVATION_SUCCESS\", lit(None))"}, "VVD_USG_001": {"sql": "-- Usage Success Logic\n-- [TO BE IMPLEMENTED]\n\nSELECT\n    CLNT_NO,\n    -- usage success calculation here\n    NULL AS USAGE_SUCCESS\nFROM\n    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)\nWHERE\n    -- conditions here\n;", "pyspark": "# Usage Success Logic\n# [TO BE IMPLEMENTED]\n\nusage_df = spark.sql(\"\"\"\n    SELECT\n        CLNT_NO,\n        -- usage success calculation here\n        NULL AS USAGE_SUCCESS\n    FROM\n        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)\n    WHERE\n        -- conditions here\n\"\"\")\n\n# Alternative: DataFrame API if needed\n# usage_df = spark.table(\"hive_analytics.tactic_evnt_hist\") \\\n#     .select(\"CLNT_NO\") \\\n#     .withColumn(\"USAGE_SUCCESS\", lit(None))"}, "VVD_PRV_001": {"sql": "-- Provisioning Success Logic\n-- [TO BE IMPLEMENTED]\n\nSELECT\n    CLNT_NO,\n    -- provisioning success calculation here\n    NULL AS PROVISIONING_SUCCESS\nFROM\n    -- source table here (e.g., DGNV01.TACTIC_EVNT_IP_AR_HIST)\nWHERE\n    -- conditions here\n;", "pyspark": "# Provisioning Success Logic\n# [TO BE IMPLEMENTED]\n\nprovisioning_df = spark.sql(\"\"\"\n    SELECT\n        CLNT_NO,\n        -- provisioning success calculation here\n        NULL AS PROVISIONING_SUCCESS\n    FROM\n        -- hive table here (e.g., hive_analytics.tactic_evnt_hist)\n    WHERE\n        -- conditions here\n\"\"\")\n\n# Alternative: DataFrame API if needed\n# provisioning_df = spark.table(\"hive_analytics.tactic_evnt_hist\") \\\n#     .select(\"CLNT_NO\") \\\n#     .withColumn(\"PROVISIONING_SUCCESS\", lit(None))"}, "CC_ACQ_001": {"sql": "-- Credit Card Acquisition Success Logic\n-- [TO BE IMPLEMENTED]\n\nSELECT\n    CLNT_NO,\n    -- credit card acquisition success calculation here\n    NULL AS CC_ACQUISITION_SUCCESS\nFROM\n    DGNV01.TACTIC_EVNT_IP_AR_HIST t\n    LEFT JOIN CARDS.CC_APPLICATIONS a ON t.CLNT_NO = a.CLNT_NO\nWHERE\n    -- conditions here\n;", "pyspark": "# Credit Card Acquisition Success Logic\n# [TO BE IMPLEMENTED]\n\ncc_acquisition_df = spark.sql(\"\"\"\n    SELECT\n        CLNT_NO,\n        -- credit card acquisition success calculation here\n        NULL AS CC_ACQUISITION_SUCCESS\n    FROM\n        hive_analytics.tactic_evnt_hist t\n        LEFT JOIN hive_cards.cc_applications a ON t.CLNT_NO = a.CLNT_NO\n    WHERE\n        -- conditions here\n\"\"\")"}, "MTG_ACQ_001": {"sql": "-- Mortgage Acquisition Success Logic\n-- [TO BE IMPLEMENTED]\n\nSELECT\n    CLNT_NO,\n    -- mortgage acquisition success calculation here\n    NULL AS MTG_ACQUISITION_SUCCESS\nFROM\n    LENDING.MORTGAGE_APPLICATIONS\nWHERE\n    -- conditions here\n;", "pyspark": "# Mortgage Acquisition Success Logic\n# [TO BE IMPLEMENTED]\n\nmtg_acquisition_df = spark.sql(\"\"\"\n    SELECT\n        CLNT_NO,\n        -- mortgage acquisition success calculation here\n        NULL AS MTG_ACQUISITION_SUCCESS\n    FROM\n        hive_lending.mortgage_applications\n    WHERE\n        -- conditions here\n\"\"\")"}};
+
+        // Filter functionality
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const product = document.getElementById('productFilter').value;
+            const type = document.getElementById('typeFilter').value;
+            const pillar = document.getElementById('pillarFilter').value;
+
+            const rows = document.querySelectorAll('.metric-row');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const rowProduct = row.dataset.product;
+                const rowType = row.dataset.type;
+                const rowPillar = row.dataset.pillar;
+
+                const matchesSearch = !search || text.includes(search);
+                const matchesProduct = !product || rowProduct === product;
+                const matchesType = !type || rowType === type;
+                const matchesPillar = !pillar || rowPillar === pillar;
+
+                if (matchesSearch && matchesProduct && matchesType && matchesPillar) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            document.getElementById('resultCount').textContent = visibleCount;
+        }
+
+        // Modal functionality
+        function showCode(metricId) {
+            document.getElementById('modal-' + metricId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(metricId) {
+            document.getElementById('modal-' + metricId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Tab switching
+        function switchTab(metricId, tab) {
+            // Update buttons
+            const modal = document.getElementById('modal-' + metricId);
+            modal.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update panels
+            modal.querySelectorAll('.code-panel').forEach(panel => panel.classList.remove('active'));
+            document.getElementById('code-' + metricId + '-' + tab).classList.add('active');
+        }
+
+        // Copy functionality
+        function copyCode(metricId, type) {
+            const code = codeData[metricId][type];
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', filterTable);
+        document.getElementById('productFilter').addEventListener('change', filterTable);
+        document.getElementById('typeFilter').addEventListener('change', filterTable);
+        document.getElementById('pillarFilter').addEventListener('change', filterTable);
+    </script>
+</body>
+</html>
