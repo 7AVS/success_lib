@@ -111,6 +111,11 @@
         .col-name {
             font-weight: 500;
         }
+        .col-definition {
+            max-width: 300px;
+            font-size: 13px;
+            color: #555;
+        }
 
         /* Tags */
         .tag {
@@ -322,6 +327,7 @@
                     <tr>
                         <th>Metric ID</th>
                         <th>Name</th>
+                        <th>Definition</th>
                         <th>Product</th>
                         <th>LOB</th>
                         <th>Type</th>
@@ -341,6 +347,7 @@
                 data-pillar="Conversion">
                 <td class="col-id">VVD_ACQ_001</td>
                 <td class="col-name">Acquisition Success</td>
+                <td class="col-definition">Measures successful Virtual Visa Debit card acquisition</td>
                 <td class="col-product">VVD</td>
                 <td class="col-lob">Debit Cards</td>
                 <td class="col-type"><span class="tag tag-type">Acquisition</span></td>
@@ -359,6 +366,7 @@
                 data-pillar="Conversion">
                 <td class="col-id">VVD_ACT_001</td>
                 <td class="col-name">Activation Success</td>
+                <td class="col-definition">Measures successful activation of Virtual Visa Debit card after issuance</td>
                 <td class="col-product">VVD</td>
                 <td class="col-lob">Debit Cards</td>
                 <td class="col-type"><span class="tag tag-type">Activation</span></td>
@@ -377,6 +385,7 @@
                 data-pillar="Engagement">
                 <td class="col-id">VVD_USG_001</td>
                 <td class="col-name">Usage Success</td>
+                <td class="col-definition"><span class="empty">-</span></td>
                 <td class="col-product">VVD</td>
                 <td class="col-lob"><span class="empty">-</span></td>
                 <td class="col-type"><span class="tag tag-type">Usage</span></td>
@@ -395,6 +404,7 @@
                 data-pillar="Conversion">
                 <td class="col-id">VVD_PRV_001</td>
                 <td class="col-name">Provisioning Success</td>
+                <td class="col-definition"><span class="empty">-</span></td>
                 <td class="col-product">VVD</td>
                 <td class="col-lob"><span class="empty">-</span></td>
                 <td class="col-type"><span class="tag tag-type">Provisioning</span></td>
@@ -413,6 +423,7 @@
                 data-pillar="Conversion">
                 <td class="col-id">CC_ACQ_001</td>
                 <td class="col-name">Credit Card Acquisition Success</td>
+                <td class="col-definition">Measures successful credit card acquisition after campaign exposure</td>
                 <td class="col-product">CC</td>
                 <td class="col-lob">Cards</td>
                 <td class="col-type"><span class="tag tag-type">Acquisition</span></td>
@@ -431,6 +442,7 @@
                 data-pillar="Conversion">
                 <td class="col-id">MTG_ACQ_001</td>
                 <td class="col-name">Mortgage Acquisition Success</td>
+                <td class="col-definition">Measures successful mortgage origination after campaign exposure</td>
                 <td class="col-product">MTG</td>
                 <td class="col-lob">Lending</td>
                 <td class="col-type"><span class="tag tag-type">Acquisition</span></td>

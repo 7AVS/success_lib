@@ -95,6 +95,7 @@ def generate_html(library_data, metrics_with_code):
                 data-pillar="{metric.get('pillar', '')}">
                 <td class="col-id">{metric['metric_id']}</td>
                 <td class="col-name">{metric['metric_name']}</td>
+                <td class="col-definition">{business_def}</td>
                 <td class="col-product">{metric.get('product', '')}</td>
                 <td class="col-lob">{lob}</td>
                 <td class="col-type"><span class="tag tag-type">{metric.get('metric_type', '')}</span></td>
@@ -266,6 +267,11 @@ def generate_html(library_data, metrics_with_code):
         }}
         .col-name {{
             font-weight: 500;
+        }}
+        .col-definition {{
+            max-width: 300px;
+            font-size: 13px;
+            color: #555;
         }}
 
         /* Tags */
@@ -472,6 +478,7 @@ def generate_html(library_data, metrics_with_code):
                     <tr>
                         <th>Metric ID</th>
                         <th>Name</th>
+                        <th>Definition</th>
                         <th>Product</th>
                         <th>LOB</th>
                         <th>Type</th>
