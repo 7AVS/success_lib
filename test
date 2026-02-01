@@ -1,10 +1,9 @@
-# Compile the regex once upfront — avoids recompiling per file
-$regex = [regex]::new("FTH|MOM|BOL|ESV|GIS|LTA|RCL|RCU|VBA|CTU|MRF|NMI|PCD|PCL|PCQ|PPQ|TFP|VBU|RIS|TAO|RMG|VCN|IRI|O2P|CRV|EBR|IDE|RPB|ZRR|PFS|PRA|DAR|VSX|RCR|COB|VAW|GNE|COR|VUI|PVE|MOS|RAT|MFY|MMT|IFC", "Compiled, IgnoreCase")
+$files = Import-Csv "$HOME\Desktop\sas_mnemonic_files.csv"
 
-$searchPath = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics"
-$outFile = "$HOME\Desktop\sas_mnemonic_files.csv"
+$narrowed = $files | Where-Object {
+    $content = Get-Content -LiteralPath $_.FullPath -Raw -ErrorAction SilentlyContinue
+    $content -match "(?i)success"
+}
 
-Get-ChildItem -LiteralPath $searchPath -Filter "*.sas" -Recurse -File -ErrorAction SilentlyContinue |
-  Select-String -Pattern $regex -List -ErrorAction SilentlyContinue |
-  Select-Object @{N='FileName';E={$_.Filename}}, @{N='FolderPath';E={$_.Path | Split-Path}}, @{N='FullPath';E={$_.Path}} |
-  Export-Csv -LiteralPath $outFile -NoTypeInformation
+$narrowed | Export-Csv "$HOME\Desktop\sas_success.csv" -NoTypeInformation
+Write-Host "Narrowed from $($files.Count) to $($narrowed.Count) files"
