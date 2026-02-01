@@ -1,10 +1,23 @@
-Get-Content "$HOME\Desktop\mnemonic_matches.txt" |
-  ForEach-Object {
-    if ($_ -match '^(.+?):(\d+):(.+)$') {
-      [PSCustomObject]@{
-        File = $Matches[1]
-        Line = $Matches[2]
-        Content = $Matches[3]
-      }
-    }
-  } | Export-Csv "$HOME\Desktop\mnemonic_matches.csv" -NoTypeInformation
+$pattern = "FIN|MON|ESV|MRF|MRI|RSS|TAO|RNG|VON|IDE|ZHR|PFS|PRA|DAR|VSX|RCR|COB|VAW|GNE|COR|VUI|PVE|MOS|RAT|MFV|MMT|IFC"
+
+Get-ChildItem -Path . -Filter "*.sas" -Recurse -File -ErrorAction SilentlyContinue |
+  Select-String -Pattern $pattern -List -ErrorAction SilentlyContinue |
+  Select-Object @{N='FileName';E={$_.Filename}}, @{N='FolderPath';E={$_.Path | Split-Path}}, @{N='FullPath';E={$_.Path}} |
+  Export-Csv -Path "$HOME\Desktop\sas_mnemonic_files.csv" -NoTypeInformation
+
+Write-Host "Done"
+
+$pattern = "FIN|MON|ESV|MRF|MRI|RSS|TAO|RNG|VON|IDE|ZHR|PFS|PRA|DAR|VSX|RCR|COB|VAW|GNE|COR|VUI|PVE|MOS|RAT|MFV|MMT|IFC"
+
+# === IN PATH (where you're searching) ===
+$searchPath = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics"
+
+# === OUT PATH (where results go) ===
+$outFile = "$HOME\Desktop\sas_mnemonic_files.csv"
+
+Get-ChildItem -LiteralPath $searchPath -Filter "*.sas" -Recurse -File -ErrorAction SilentlyContinue |
+  Select-String -Pattern $pattern -List -ErrorAction SilentlyContinue |
+  Select-Object @{N='FileName';E={$_.Filename}}, @{N='FolderPath';E={$_.Path | Split-Path}}, @{N='FullPath';E={$_.Path}} |
+  Export-Csv -LiteralPath $outFile -NoTypeInformation
+
+Write-Host "Done — saved to $outFile"
