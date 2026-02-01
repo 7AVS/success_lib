@@ -1,40 +1,10 @@
-Step 1: Open the terminal in VS Code on your workstation (Ctrl+backtick)
-
-  Step 2: Navigate to wherever the SAS files are. If it's a network drive like S:\ or \\server\share\, just cd to it:
-
-  # PowerShell
-  cd S:\
-  # or
-  cd "\\server\share\analytics"
-
-  Step 3: Run this (PowerShell):
-
-  Get-ChildItem -Path . -Filter "*.sas" -Recurse | Select-String -Pattern "FTH|MOM|ESV|MRF|NMI|RSS|TAO|RMG|VCN|IRI|O2P|C
-  RV|IDE|ZHR|PFS|PRA|DAR|VSX|RCR|COB|VAW|GNE|COR|VUI|PVE|MOS|RAT|MFY|MMT|IFC" | Out-File
-  "$HOME\Desktop\mnemonic_matches.txt"
-
-  Or if you have cmd:
-
-  findstr /s /i /n "FTH MOM ESV MRF NMI RSS TAO RMG VCN IRI O2P CRV IDE ZHR PFS PRA DAR VSX RCR COB VAW GNE COR VUI PVE
-  MOS RAT MFY MMT IFC" *.sas > %USERPROFILE%\Desktop\mnemonic_matches.txt
-
-  That dumps everything to a file on your desktop. Then drop that file into this repo and I'll parse the whole thing —
-  map every hit to the 31 campaigns and tell you which files have the success logic for each one.
-
-  The search will be slow if it's over the network, but it only needs to run once. Let it churn.
-
-❯ I need to type the literal path what is the command for CD literal path
-
-● For a UNC path (the \\server\share kind), cd doesn't work directly in PowerShell or cmd. Use:
-
-  PowerShell:
-  Set-Location -LiteralPath "\\server\share\folder"
-
-  Or map it to a drive first:
-  New-PSDrive -Name X -PSProvider FileSystem -Root "\\server\share\folder"
-  cd X:\
-
-  cmd:
-  pushd "\\server\share\folder"
-
-  pushd in cmd automatically maps a temporary drive letter for UNC paths — it's the easiest option if you're using cmd.
+Get-Content "$HOME\Desktop\mnemonic_matches.txt" |
+  ForEach-Object {
+    if ($_ -match '^(.+?):(\d+):(.+)$') {
+      [PSCustomObject]@{
+        File = $Matches[1]
+        Line = $Matches[2]
+        Content = $Matches[3]
+      }
+    }
+  } | Export-Csv "$HOME\Desktop\mnemonic_matches.csv" -NoTypeInformation
