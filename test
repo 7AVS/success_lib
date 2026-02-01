@@ -1,0 +1,31 @@
+VS Code's built-in search is actually very good for this — no Copilot needed.
+
+  Fastest method — VS Code Search (Ctrl+Shift+F):
+
+  1. Open the folder containing your SAS files
+  2. Ctrl+Shift+F opens the global search panel
+  3. In the "files to include" box, type: *.sas
+  4. Search for each mnemonic — e.g., FTH or FIRST TIME HOMEBUYER
+  5. Results show every file and line that matches, clickable
+
+  Power moves in that search panel:
+  - Toggle the .* button to enable regex — then you can search for multiple mnemonics at once: FTH|MOM|ESV|MRF|NMI
+  - Use the "files to exclude" box to skip logs, backups, etc.: *.log, *backup*
+
+  From the terminal (if you prefer CLI):
+
+  # Search all .sas files for a mnemonic
+  findstr /s /i "FTH" *.sas
+
+  # Or multiple at once
+  findstr /s /i "FTH MOM ESV MRF" *.sas
+
+  The batch approach — search all 31 at once:
+
+  findstr /s /i /c:"FTH" /c:"MOM" /c:"ESV" /c:"MRF" /c:"NMI" /c:"RSS" /c:"TAO" /c:"RMG" /c:"VCN" /c:"IRI" /c:"O2P"
+  /c:"CRV" /c:"IDE" /c:"ZHR" /c:"PFS" /c:"PRA" /c:"DAR" /c:"VSX" /c:"RCR" /c:"COB" /c:"VAW" /c:"GNE" /c:"COR" /c:"VUI"
+  /c:"PVE" /c:"MOS" /c:"RAT" /c:"MFY" /c:"MMT" /c:"IFC" /c:"VBA_LTA" *.sas
+
+  Also worth knowing: If you install Claude Code (npm install -g @anthropic-ai/claude-code), you can run it right in VS
+  Code's terminal, point it at that SAS directory, and it'll do the searching, extracting, and cataloging for you
+  programmatically. That's probably the biggest time saver given what you're trying to do.
