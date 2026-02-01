@@ -1,9 +1,38 @@
-$files = Import-Csv "$HOME\Desktop\sas_mnemonic_files.csv"
+# One row per FILE + MNEMONIC combo
+$pattern = "FIN|MON|BOL|ESV|GIS|LTA|RCL|RCU|VBA|CTU|MRF|MMT|PCD|PCL|PCQ|PPQ|TFP|VBU|RIS|TAO|RNG|VCN|JRI|O2P|CRV|EBR|IDE|APB|ZKR|PFS|PRA|DAR|VSX|ACR|COR|VAM|GNE|COR|VUJ|PVE|MOS|RAT|MFV|MNT|IFC"
+$mnemonics = $pattern -split '\|'
 
-$narrowed = $files | Where-Object {
-    $content = Get-Content -LiteralPath $_.FullPath -Raw -ErrorAction SilentlyContinue
-    $content -match "(?i)success"
+$results = @()
+$files = Import-Csv "...\sas_success.csv"
+
+foreach ($file in $files) {
+    $content = Get-Content -LiteralPath $file.FullPath -Raw -ErrorAction SilentlyContinue
+    if (-not $content) { continue }
+    
+    $info = Get-Item -LiteralPath $file.FullPath -ErrorAction SilentlyContinue
+    $found = $mnemonics | Where-Object { $content -match "\b$_\b" }
+    
+    foreach ($mne in $found) {
+        $results += [PSCustomObject]@{
+            Mnemonic     = $mne
+            FileName     = $file.FileName
+            LastModified = $info.LastWriteTime
+            FullPath     = $file.FullPath
+            MnemonicCount = $found.Count
+        }
+    }
 }
 
-$narrowed | Export-Csv "$HOME\Desktop\sas_success.csv" -NoTypeInformation
-Write-Host "Narrowed from $($files.Count) to $($narrowed.Count) files"
+$results | Export-Csv "...\sas_success_by_mnemonic.csv" -NoTypeInformation
+
+
+
+
+
+$latest = Import-Csv "...\sas_success_by_mnemonic.csv" |
+    Sort-Object Mnemonic, LastModified -Descending |
+    Group-Object Mnemonic |
+    ForEach-Object { $_.Group | Select-Object -First 1 }
+
+$latest | Export-Csv "...\sas_latest_per_mnemonic.csv" -NoTypeInformation
+Write-Host "Unique mnemonics: $($latest.Count)"
