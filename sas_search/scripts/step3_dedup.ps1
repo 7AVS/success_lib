@@ -1,42 +1,20 @@
-<#
-.SYNOPSIS
-    Step 3: Deduplicate — Keep one file per mnemonic (latest, prefer success).
+# Step 3 - Deduplicate: keep one file per mnemonic (latest, prefer success)
+# Input needs columns: Mnemonic, FileName, LastModified, FullPath
+# HasSuccess column is optional (compatible with v2 output)
 
-.DESCRIPTION
-    Reads a tagged CSV (from step 2 or v2 output) and keeps only the
-    best file for each mnemonic. Preference: files with "success" first,
-    then most recently modified.
+# === IN: tagged file from step 2 (or v2 output: sas_success_by_mnemonic.csv) ===
+$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step2_tagged.csv"
 
-    Input CSV needs columns: Mnemonic, FileName, LastModified, FullPath
-    HasSuccess column is optional (if missing, sorts by date only).
+# === IN: mnemonic reference file ===
+$mappingFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\sas_search\keyword_mapping.csv"
 
-    (Compatible with v2 output: sas_success_by_mnemonic.csv)
+# === OUT: where results go ===
+$outFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step3_latest.csv"
 
-.PARAMETER inFile
-    Tagged CSV to deduplicate.
-
-.PARAMETER mappingFile
-    Path to keyword_mapping.csv (used to report missing mnemonics).
-
-.PARAMETER outFile
-    Where to save the deduplicated CSV.
-
-.EXAMPLE
-    .\step3_dedup.ps1 -inFile "C:\lib\sas_success_by_mnemonic.csv" `
-                      -mappingFile "C:\lib\keyword_mapping.csv" `
-                      -outFile "C:\lib\step3_latest.csv"
-#>
-param(
-    [Parameter(Mandatory=$true)]  [string]$inFile,
-    [Parameter(Mandatory=$true)]  [string]$mappingFile,
-    [Parameter(Mandatory=$true)]  [string]$outFile
-)
-
-# --- Load mnemonics (for missing report) ---
+# ---------------------------------------------------------------
 $mapping = Import-Csv $mappingFile | Where-Object { $_.Mnemonic -and $_.Mnemonic.Trim() -ne '' }
 $mnemonics = $mapping.Mnemonic
 
-# --- Load and deduplicate ---
 $data = Import-Csv $inFile
 $hasSuccessCol = ($data | Get-Member -Name 'HasSuccess' -MemberType NoteProperty) -ne $null
 
@@ -61,11 +39,8 @@ $latest | Export-Csv -LiteralPath $outFile -NoTypeInformation
 
 Write-Host "Unique mnemonics: $($latest.Count)"
 
-# Report missing
 $foundMne = $latest.Mnemonic
 $missing = $mnemonics | Where-Object { $_ -notin $foundMne }
-if ($missing) {
-    Write-Host "NOT FOUND: $($missing -join ', ')" -ForegroundColor Yellow
-}
+if ($missing) { Write-Host "NOT FOUND: $($missing -join ', ')" -ForegroundColor Yellow }
 
-Write-Host "Done -> $outFile"
+Write-Host "Done - saved to $outFile"

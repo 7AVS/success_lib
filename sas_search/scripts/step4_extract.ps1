@@ -1,65 +1,34 @@
-<#
-.SYNOPSIS
-    Step 4: Extract — Pull annotated logic blocks from SAS files.
+# Step 4 - Extract: pull annotated logic blocks from SAS files
+# Input needs columns: Mnemonic, FileName, LastModified, FullPath
+# HasSuccess column is optional (compatible with v2 output: sas_latest_per_mnemonic.csv)
+#
+# Output markers:
+#   >>>  = line where mnemonic is referenced
+#    *   = line with success/flag/indicator term
+#    ?   = line with conditional logic (if/where/case/when)
 
-.DESCRIPTION
-    Reads a deduplicated CSV (one file per mnemonic) and extracts code
-    blocks around each mnemonic reference. Produces an annotated text
-    file ready for LLM review.
+# === IN: deduplicated file from step 3 (or v2 output: sas_latest_per_mnemonic.csv) ===
+$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step3_latest.csv"
 
-    Input CSV needs columns: Mnemonic, FileName, LastModified, FullPath
-    HasSuccess column is optional (computed on the fly if missing).
+# === IN: mnemonic reference file ===
+$mappingFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\sas_search\keyword_mapping.csv"
 
-    (Compatible with v2 output: sas_latest_per_mnemonic.csv)
+# === OUT: where results go ===
+$outFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step4_extracts.txt"
 
-    Output markers:
-      >>>  = line where mnemonic is referenced
-       *   = line with success/flag/indicator term
-       ?   = line with conditional logic (if/where/case/when)
+# === SETTINGS ===
+$contextAbove  = 20    # lines above each mnemonic match
+$contextBelow  = 20    # lines below each mnemonic match
+$maxBlocks     = 10    # max blocks per mnemonic
 
-.PARAMETER inFile
-    Deduplicated CSV (one row per mnemonic with FullPath to .sas file).
-
-.PARAMETER mappingFile
-    Path to keyword_mapping.csv (used for enrichment headers).
-
-.PARAMETER outFile
-    Where to save the annotated extract text file.
-
-.PARAMETER contextAbove
-    Lines to extract above each mnemonic match (default: 20).
-
-.PARAMETER contextBelow
-    Lines to extract below each mnemonic match (default: 20).
-
-.PARAMETER maxBlocks
-    Max blocks to extract per mnemonic (default: 10).
-
-.EXAMPLE
-    .\step4_extract.ps1 -inFile "C:\lib\sas_latest_per_mnemonic.csv" `
-                        -mappingFile "C:\lib\keyword_mapping.csv" `
-                        -outFile "C:\lib\success_extracts.txt"
-#>
-param(
-    [Parameter(Mandatory=$true)]   [string]$inFile,
-    [Parameter(Mandatory=$true)]   [string]$mappingFile,
-    [Parameter(Mandatory=$true)]   [string]$outFile,
-    [int]$contextAbove  = 20,
-    [int]$contextBelow  = 20,
-    [int]$maxBlocks     = 10
-)
-
-# --- Load mapping for enrichment ---
+# ---------------------------------------------------------------
 $mapping = Import-Csv $mappingFile | Where-Object { $_.Mnemonic -and $_.Mnemonic.Trim() -ne '' }
 $mneLookup = @{}
 foreach ($row in $mapping) { $mneLookup[$row.Mnemonic] = $row }
 
-# --- Load input ---
 $deduped = Import-Csv $inFile
-Write-Host "Loaded $($deduped.Count) mnemonics from $inFile"
-Write-Host "Context window: $contextAbove above / $contextBelow below"
+Write-Host "Loaded $($deduped.Count) mnemonics from input"
 
-# --- Process ---
 $sb = [System.Text.StringBuilder]::new()
 $extractCount = 0
 $noMatchMne = @()
@@ -68,7 +37,7 @@ foreach ($entry in $deduped) {
     $mne = $entry.Mnemonic
     $lines = Get-Content -LiteralPath $entry.FullPath -ErrorAction SilentlyContinue
     if (-not $lines) {
-        Write-Host "  SKIP $mne - cannot read file: $($entry.FullPath)" -ForegroundColor Yellow
+        Write-Host "  SKIP $mne - cannot read: $($entry.FullPath)" -ForegroundColor Yellow
         continue
     }
     $totalLines = $lines.Count
@@ -138,10 +107,9 @@ foreach ($entry in $deduped) {
     # --- Merge overlapping windows ---
     $windows = $windows | Sort-Object Start
     $merged = @()
-
-    $curStart  = $windows[0].Start
-    $curEnd    = $windows[0].End
-    $curMatch  = [System.Collections.ArrayList]@($windows[0].MatchLines)
+    $curStart = $windows[0].Start
+    $curEnd   = $windows[0].End
+    $curMatch = [System.Collections.ArrayList]@($windows[0].MatchLines)
 
     for ($w = 1; $w -lt $windows.Count; $w++) {
         if ($windows[$w].Start -le ($curEnd + 1)) {
@@ -164,7 +132,6 @@ foreach ($entry in $deduped) {
         MatchLines = @($curMatch | Sort-Object -Unique)
     }
 
-    # Cap number of blocks
     if ($merged.Count -gt $maxBlocks) {
         $merged = $merged | Select-Object -First $maxBlocks
     }
@@ -239,15 +206,10 @@ foreach ($entry in $deduped) {
     Write-Host "  $mne - $($matchLines.Count) refs, $($merged.Count) blocks [$matchMethod]"
 }
 
-# --- Write output ---
 Set-Content -LiteralPath $outFile -Value $sb.ToString() -Encoding UTF8
 
 Write-Host ""
-Write-Host "Extracted blocks for $extractCount mnemonics -> $outFile"
+Write-Host "Extracted $extractCount mnemonics - saved to $outFile"
 if ($noMatchMne.Count -gt 0) {
     Write-Host "No refs found for: $($noMatchMne -join ', ')" -ForegroundColor Yellow
 }
-Write-Host ""
-Write-Host "Legend:  >>>  mnemonic reference"
-Write-Host "          *   success/flag/indicator term"
-Write-Host "          ?   conditional logic (if/where/case/when)"
