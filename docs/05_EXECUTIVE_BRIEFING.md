@@ -318,6 +318,23 @@ The following decisions require input before finalizing the data architecture. T
 | Who maintains the curated dataset long-term? | Determines resource needs | Dedicated role, shared responsibility |
 | Who approves new metrics? | Governance model | Single approver, committee, self-service |
 
+### 5. Martech Data Pipeline (NEW - Layer 1 Automation)
+
+| Question | Why It Matters | Options |
+|----------|----------------|---------|
+| Does Martech feed the MEANING of campaign codes into any database table? | Determines if Layer 1 can be automated | Yes (consume table) / No (manual extraction from tech specs) |
+| What contextual information is already in a structured table vs only in Word docs? | Identifies what we can automate vs must hardcode | Inventory needed |
+| Can we access Martech's deployment pipeline to capture settings at creation time? | Would enable real-time Layer 1 population | Integration possible / Not feasible |
+
+**Context:** When Martech deploys a campaign, they create codes like RPT_GRP_CD = A01, TST_GRP_CD = TG4, etc. The CODES appear in tactic_evnt_hist, but the MEANING (what segment A01 represents, what channel was used) may only exist in the technical specification document.
+
+**What we need to know:**
+- Is there a lookup table that maps: `RPT_GRP_CD → Segment Name`?
+- Is there a table that captures: `Channel codes → Channel description`?
+- Does any table contain: `Success metrics defined for this campaign`?
+
+**If NO structured data exists:** We must manually extract from tech spec docs and create hardcoded lookups. This becomes the basis for proposing that Martech add this to their pipeline.
+
 ---
 
 ## Summary

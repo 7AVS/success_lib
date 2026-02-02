@@ -1,68 +1,47 @@
-# {METRIC_ID} - {Metric Name}
-<!-- Owner: {Owner Name} | Version: v1.0 -->
+# {METRIC_ID} - {METRIC_NAME}
+<!-- Owner: {OWNER} | Version: v1.0 | Last Validated: {DATE} -->
 
 ## Metadata
 
 | Attribute | Value |
 |-----------|-------|
-| Product | {Product code: VVD, CC, MTG, etc.} |
-| Metric Type | {Acquisition / Activation / Usage / Provisioning / Retention} |
-| Pillar | {Conversion / Engagement / Retention / Profitability / Share of Wallet} |
-| Campaigns Using | {Campaign codes, comma-separated} |
-| Grain | {Client / Account / Transaction} |
+| Product | {PRODUCT} |
+| Metric Type | {METRIC_TYPE} |
+| Pillar | {PILLAR} |
+| Campaigns Using | {CAMPAIGNS} |
+| Grain | {GRAIN} |
+| Date Field | {DATE_FIELD} |
+| Source | {SOURCE} |
 
 ## Business Definition
 
-{Plain English description of what this metric measures. Be specific about:
-- What event/action triggers this metric
-- Any conditions or filters applied
-- Time windows if applicable}
+{BUSINESS_DEFINITION}
+
+**Success Criteria:**
+- {CRITERION_1}
+- {CRITERION_2}
+- {CRITERION_3}
 
 ## Source Tables
 
-**Data Warehouse (Teradata/Snowflake):**
-- {schema.table_name}
-- {schema.table_name}
+| Table | Path / Schema | Partition |
+|-------|---------------|-----------|
+| {TABLE_NAME} | {TABLE_PATH} | {PARTITION_FIELD} |
 
-**Data Lake (Hive):**
-- {database.table_name}
-- {database.table_name}
+## Filter Logic
 
----
+| Field | Condition | Reason |
+|-------|-----------|--------|
+| {FILTER_FIELD_1} | {FILTER_CONDITION_1} | {FILTER_REASON_1} |
+| {FILTER_FIELD_2} | {FILTER_CONDITION_2} | {FILTER_REASON_2} |
 
-## SQL (Data Warehouse)
+## Client Extraction
 
-```sql
--- ============================================================
--- Metric: {METRIC_ID} - {Metric Name}
--- Description: {Brief description}
--- Source: Data Warehouse (Teradata / Snowflake)
--- Author: {Name}
--- Date: {YYYY-MM-DD}
--- ============================================================
+**Direct or Transformation Required:**
 
--- Parameters (replace with actual values or use as template)
--- @treatment_start_date: Campaign treatment start date
--- @tactic_ids: List of tactic IDs for the campaign
-
-SELECT
-    client_id,
-    -- metric flag (1 = success, 0 = no success)
-    CASE
-        WHEN {success_condition} THEN 1
-        ELSE 0
-    END AS {metric_id}_flag,
-    -- event date (when the success occurred)
-    {event_date_column} AS event_date,
-    -- auxiliary fields (product type, account type, etc.)
-    {auxiliary_field_1} AS {field_name_1},
-    {auxiliary_field_2} AS {field_name_2}
-FROM
-    {schema.source_table} src
-WHERE
-    {filter_conditions}
-    AND {date_filter}
-;
+If client ID is not directly available:
+```
+CLNT_NO = {CLIENT_EXTRACTION_LOGIC}
 ```
 
 ---
@@ -70,59 +49,95 @@ WHERE
 ## PySpark (Hive)
 
 ```python
-# ============================================================
-# Metric: {METRIC_ID} - {Metric Name}
-# Description: {Brief description}
-# Source: Data Lake (Hive)
-# Author: {Name}
-# Date: {YYYY-MM-DD}
-# ============================================================
+# {METRIC_ID}: {METRIC_NAME}
+# Source: Success Library v2.0
+# Validated: {DATE}
 
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, lit
+from pyspark.sql import functions as F
 
-# Parameters (replace with actual values)
-treatment_start_date = '{YYYY-MM-DD}'
-tactic_ids = ['{TACTIC_1}', '{TACTIC_2}']
+# Configuration
+TABLE_PATH = "{TABLE_PATH}"
+DATE_FIELD = "{DATE_FIELD}"
+YEARS = [2025, 2026]
 
-# Query
-query = """
-SELECT
-    client_id,
-    CASE
-        WHEN {success_condition} THEN 1
-        ELSE 0
-    END AS {metric_id}_flag,
-    {event_date_column} AS event_date,
-    {auxiliary_field_1} AS {field_name_1},
-    {auxiliary_field_2} AS {field_name_2}
-FROM
-    {database.source_table} src
-WHERE
-    {filter_conditions}
-    AND {date_filter}
-"""
+# Build partition paths
+paths = [f"{TABLE_PATH}{year}*" for year in YEARS]
 
-# Execute
-df = spark.sql(query)
+# Load data
+df = spark.read.parquet(*paths)
 
-# Optional: Register as temp view for further processing
-df.createOrReplaceTempView("{metric_id}_result")
+# Apply filters
+df = df.filter(
+    # TODO: Add filter conditions
+    # F.col("FIELD") == VALUE
+)
 
-# Display sample
-df.show(10)
+# Extract client number (if transformation needed)
+# df = df.withColumn(
+#     "CLNT_NO",
+#     F.regexp_replace(F.substring(F.col("CARD_FIELD"), 7, 9), "^0+", "")
+# )
+
+# Select output columns
+df = df.select(
+    F.col("CLNT_NO"),
+    F.col(DATE_FIELD).alias("SUCCESS_DT")
+)
+
+# Result: DataFrame with CLNT_NO, SUCCESS_DT
+# Join with tactic data where SUCCESS_DT BETWEEN TREATMT_STRT_DT AND TREATMT_END_DT
 ```
 
 ---
 
-## Notes
+## SQL (Data Warehouse)
 
-{Any additional notes, caveats, known issues, or special handling required}
+```sql
+-- {METRIC_ID}: {METRIC_NAME}
+-- Environment: EDW / Teradata / Snowflake
+-- Note: Adjust schema/table names for your environment
+
+SELECT
+    CLNT_NO,
+    {DATE_FIELD} AS SUCCESS_DT
+FROM
+    {SCHEMA}.{TABLE_NAME}
+WHERE
+    -- TODO: Add filter conditions
+    1=1
+;
+```
 
 ---
 
-## Change History
+## Integration Notes
 
-| Date | Version | Author | Change Description |
-|------|---------|--------|-------------------|
-| {YYYY-MM-DD} | v1.0 | {Name} | Initial creation |
+**For Vintage Engine:**
+- This metric is used as:
+  - PRIMARY for campaigns: {PRIMARY_CAMPAIGNS}
+  - SECONDARY for campaigns: {SECONDARY_CAMPAIGNS}
+- Join on `CLNT_NO` with tactic data
+- Success window: `SUCCESS_DT BETWEEN TREATMT_STRT_DT AND TREATMT_END_DT`
+- Aggregation: First success date per client
+
+**Engine Reference:**
+```python
+# In vintage_engine, this metric is defined as:
+SUCCESS_DEFINITIONS["{METRIC_ID}"] = {
+    "source": "{SOURCE}",
+    "table_path": "{TABLE_PATH}",
+    "date_field": "{DATE_FIELD}",
+    "client_field": "CLNT_NO",
+    "filters": {
+        # TODO: Add filters
+    }
+}
+```
+
+---
+
+## Change Log
+
+| Date | Version | Change | Author |
+|------|---------|--------|--------|
+| {DATE} | v1.0 | Initial creation from intake | {OWNER} |

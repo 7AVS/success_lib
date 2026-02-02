@@ -1,85 +1,171 @@
 {
   "library_info": {
     "name": "Success Library",
-    "version": "v0.1-pilot",
-    "last_updated": "2026-01-16",
-    "updated_by": "",
+    "version": "v0.2-pilot",
+    "last_updated": "2026-01-24",
+    "updated_by": "VVD Vintage Engine Integration",
     "description": "Centralized repository of success metric definitions and calculation logic"
   },
+  "schema_version": "2.0",
+  "schema_notes": "Added 'technical' block for engine integration. Code files contain executable PySpark.",
   "metrics": [
     {
       "metric_id": "VVD_ACQ_001",
-      "metric_name": "Acquisition Success",
+      "metric_name": "Card Acquisition",
       "product": "VVD",
       "line_of_business": "Debit Cards",
       "metric_type": "Acquisition",
       "pillar": "Conversion",
-      "business_definition": "Measures successful Virtual Visa Debit card acquisition",
+      "business_definition": "Client acquired a new VVD card. Card is considered acquired when ISS_DT is populated. Status must be Active (06) or Approved (08). Only VVD cards (SRVC_ID = 36).",
       "code_path": "code/VVD/VVD_ACQ_001.md",
-      "source_tables": [],
+      "source_tables": ["DDWTA_VISA_DR_CRD"],
       "staged_source": "",
       "grain": "Client",
-      "owner": "John Smith",
+      "owner": "Marketing Analytics",
       "version": "v1.0",
-      "campaigns_using": [
-        "VCN",
-        "VDA"
-      ]
+      "campaigns_using": ["VCN", "VDA"],
+      "technical": {
+        "source": "HIVE",
+        "table_path": "/prod/sz/tsz/00050/data/DDWTA_VISA_DR_CRD/PartitionColumn=Latest/CAPTR_DT=",
+        "date_field": "ISS_DT",
+        "client_field": "CLNT_NO",
+        "partition_field": "CAPTR_DT",
+        "filters": {
+          "STS_CD": ["06", "08"],
+          "SRVC_ID": 36,
+          "ISS_DT_NOT_NULL": true
+        },
+        "add_card_type": true
+      },
+      "measurement": {
+        "default_window_days": 90,
+        "attribution_model": "FIRST_TOUCH"
+      },
+      "governance": {
+        "status": "ACTIVE",
+        "last_validated": "2026-01-24"
+      }
     },
     {
       "metric_id": "VVD_ACT_001",
-      "metric_name": "Activation Success",
+      "metric_name": "Card Activation",
       "product": "VVD",
       "line_of_business": "Debit Cards",
       "metric_type": "Activation",
       "pillar": "Conversion",
-      "business_definition": "Measures successful activation of Virtual Visa Debit card after issuance",
+      "business_definition": "Client activated their VVD card. Activation is measured by ACTV_DT being populated. Status must be Active (06) or Approved (08). Only VVD cards (SRVC_ID = 36).",
       "code_path": "code/VVD/VVD_ACT_001.md",
-      "source_tables": [],
+      "source_tables": ["DDWTA_VISA_DR_CRD"],
       "staged_source": "",
       "grain": "Client",
-      "owner": "Jane Doe",
+      "owner": "Marketing Analytics",
       "version": "v1.0",
-      "campaigns_using": [
-        "VDT"
-      ]
+      "campaigns_using": ["VDT"],
+      "technical": {
+        "source": "HIVE",
+        "table_path": "/prod/sz/tsz/00050/data/DDWTA_VISA_DR_CRD/PartitionColumn=Latest/CAPTR_DT=",
+        "date_field": "ACTV_DT",
+        "client_field": "CLNT_NO",
+        "partition_field": "CAPTR_DT",
+        "filters": {
+          "STS_CD": ["06", "08"],
+          "SRVC_ID": 36,
+          "ISS_DT_NOT_NULL": true
+        },
+        "add_card_type": true
+      },
+      "measurement": {
+        "default_window_days": 90,
+        "attribution_model": "FIRST_TOUCH"
+      },
+      "governance": {
+        "status": "ACTIVE",
+        "last_validated": "2026-01-24"
+      }
     },
     {
       "metric_id": "VVD_USG_001",
-      "metric_name": "Usage Success",
+      "metric_name": "Card Usage",
       "product": "VVD",
-      "line_of_business": "",
+      "line_of_business": "Debit Cards",
       "metric_type": "Usage",
       "pillar": "Engagement",
-      "business_definition": "",
+      "business_definition": "Client used their VVD card for a transaction. Captures point-of-sale transactions with specific transaction types (10/0210, 13/0210, 12/0220) where amount > 0.",
       "code_path": "code/VVD/VVD_USG_001.md",
-      "source_tables": [],
+      "source_tables": ["DDWTA_T_PT_OF_SALE_TXN"],
       "staged_source": "",
       "grain": "Client",
-      "owner": "",
+      "owner": "Marketing Analytics",
       "version": "v1.0",
-      "campaigns_using": [
-        "VUT"
-      ]
+      "campaigns_using": ["VUI", "VUT", "VAW"],
+      "technical": {
+        "source": "HIVE",
+        "table_path": "/prod/sz/tsz/00050/data/DDWTA_T_PT_OF_SALE_TXN/SNAP_DT=",
+        "date_field": "TXN_DT",
+        "client_field": "CLNT_NO",
+        "partition_field": "SNAP_DT",
+        "filters": {
+          "SRVC_CD": 36,
+          "TXN_TYPES": [
+            {"TXN_TP": 10, "MSG_TP": "0210"},
+            {"TXN_TP": 13, "MSG_TP": "0210"},
+            {"TXN_TP": 12, "MSG_TP": "0220"}
+          ],
+          "AMT1_GT": 0,
+          "EXTRACT_CLNT_NO": true
+        },
+        "add_card_type": false,
+        "client_extraction_logic": "SUBSTR(CLNT_CRD_NO, 7, 9) with leading zeros removed"
+      },
+      "measurement": {
+        "default_window_days": 90,
+        "attribution_model": "FIRST_TOUCH"
+      },
+      "governance": {
+        "status": "ACTIVE",
+        "last_validated": "2026-01-24"
+      }
     },
     {
       "metric_id": "VVD_PRV_001",
-      "metric_name": "Provisioning Success",
+      "metric_name": "Wallet Provisioning",
       "product": "VVD",
-      "line_of_business": "",
+      "line_of_business": "Debit Cards",
       "metric_type": "Provisioning",
       "pillar": "Conversion",
-      "business_definition": "",
+      "business_definition": "Client provisioned their VVD card to a digital wallet (Apple Pay, Google Pay, etc.). Identified by token registration with wallet indicator.",
       "code_path": "code/VVD/VVD_PRV_001.md",
-      "source_tables": [],
+      "source_tables": ["DDWV05.CLNT_CRD_POS_LOG", "DL_DECMAN.TOKEN_LIST"],
       "staged_source": "",
       "grain": "Client",
-      "owner": "",
+      "owner": "Marketing Analytics",
       "version": "v1.0",
-      "campaigns_using": [
-        "VAW",
-        "VUI"
-      ]
+      "campaigns_using": ["VAW", "VUI", "VUT"],
+      "technical": {
+        "source": "EDW",
+        "table_path": null,
+        "date_field": "TXN_DT",
+        "client_field": "CLNT_NO",
+        "filters": {
+          "AMT1": 0,
+          "CLNT_CRD_NO_PREFIX": "45190",
+          "VISA_DR_CRD_NO_PREFIX": "45199",
+          "TOKN_REQSTR_ID_NOT_ZERO": true,
+          "POS_ENTR_MODE_CD_NON_EMV": "000",
+          "SRVC_CD": 36,
+          "TOKEN_WALLET_IND": "Y"
+        },
+        "add_card_type": false,
+        "client_extraction_logic": "SUBSTR(CLNT_CRD_NO, 7, 9) cast to integer"
+      },
+      "measurement": {
+        "default_window_days": 90,
+        "attribution_model": "FIRST_TOUCH"
+      },
+      "governance": {
+        "status": "ACTIVE",
+        "last_validated": "2026-01-24"
+      }
     },
     {
       "metric_id": "CC_ACQ_001",
@@ -98,11 +184,13 @@
       "grain": "Client",
       "owner": "Jane Doe",
       "version": "v1.0",
-      "campaigns_using": [
-        "CCA",
-        "CCB",
-        "CCC"
-      ]
+      "campaigns_using": ["CCA", "CCB", "CCC"],
+      "technical": null,
+      "measurement": null,
+      "governance": {
+        "status": "PLACEHOLDER",
+        "last_validated": null
+      }
     },
     {
       "metric_id": "MTG_ACQ_001",
@@ -112,18 +200,21 @@
       "metric_type": "Acquisition",
       "pillar": "Conversion",
       "business_definition": "Measures successful mortgage origination after campaign exposure",
+      "code_path": "code/MTG/MTG_ACQ_001.md",
       "source_tables": [
         "LENDING.MORTGAGE_APPLICATIONS"
       ],
       "staged_source": "",
       "grain": "Client",
       "owner": "Test User",
-      "campaigns_using": [
-        "MCA",
-        "MCB"
-      ],
-      "code_path": "code/MTG/MTG_ACQ_001.md",
-      "version": "v1.0"
+      "version": "v1.0",
+      "campaigns_using": ["MCA", "MCB"],
+      "technical": null,
+      "measurement": null,
+      "governance": {
+        "status": "PLACEHOLDER",
+        "last_validated": null
+      }
     }
   ]
 }
