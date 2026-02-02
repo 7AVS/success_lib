@@ -11,6 +11,9 @@ $mappingFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Servic
 $outFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step2_tagged.csv"
 
 # ---------------------------------------------------------------
+$outDir = Split-Path $outFile
+if (-not (Test-Path $outDir)) { New-Item -Path $outDir -ItemType Directory -Force | Out-Null }
+
 $mapping = Import-Csv $mappingFile | Where-Object { $_.Mnemonic -and $_.Mnemonic.Trim() -ne '' }
 $pattern = ($mapping.Mnemonic | Sort-Object { $_.Length } -Descending) -join '|'
 
