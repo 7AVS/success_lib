@@ -26,6 +26,15 @@
 .NOTES
     To add new campaigns: add rows to keyword_mapping.csv and re-run.
     To re-scan from scratch: delete the pipeline output folder.
+
+    BACKWARDS COMPATIBILITY:
+    You can reuse existing v1/v2 output files by setting the input
+    overrides below. The pipeline will pick up from whatever step
+    you have data for. Required CSV columns per step:
+      Step 1 input: FileName, FolderPath, FullPath
+      Step 2 input: Mnemonic, FileName, LastModified, FullPath
+      Step 3 input: Mnemonic, FileName, LastModified, FullPath
+    The HasSuccess column is optional — computed on the fly if missing.
 #>
 
 # ================================================================
@@ -45,6 +54,20 @@ $mappingFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Servic
 $contextAbove    = 20    # lines above each mnemonic match
 $contextBelow    = 20    # lines below each mnemonic match
 $maxBlocksPerFile = 10   # max extracted blocks per mnemonic-file pair
+
+# ================================================================
+# INPUT OVERRIDES - Point to existing v1/v2 files to skip steps
+# ================================================================
+# Set any of these to reuse files you already have.
+# Leave as $null to use this pipeline's own outputs.
+#
+# Examples (uncomment and adjust path):
+#   $step1Input = "...\sas_mnemonic_files.csv"
+#   $step3Input = "...\sas_latest_per_mnemonic.csv"
+
+$step1Input = $null   # Existing broad scan   (needs: FileName, FolderPath, FullPath)
+$step2Input = $null   # Existing tagged file   (needs: Mnemonic, FileName, LastModified, FullPath)
+$step3Input = $null   # Existing deduped file  (needs: Mnemonic, FileName, LastModified, FullPath)
 
 
 # ================================================================
@@ -84,11 +107,14 @@ foreach ($row in $mapping) {
 # STEP 1: SCAN - Find .sas files containing any mnemonic
 # ================================================================
 $step1File = "$outDir\step1_scan.csv"
+$step1Source = if ($step1Input) { $step1Input } else { $step1File }
 
 Write-Host ""
 Write-Host "=== STEP 1: Broad scan ===" -ForegroundColor Cyan
 
-if (Test-Path $step1File) {
+if ($step1Input) {
+    Write-Host "  Using existing file (override): $step1Input"
+} elseif (Test-Path $step1File) {
     $step1Count = (Import-Csv $step1File).Count
     Write-Host "  Output exists ($step1Count files), skipping."
     Write-Host "  Delete to re-run: $step1File"
@@ -111,16 +137,19 @@ if (Test-Path $step1File) {
 # STEP 2: TAG - Which mnemonics appear in each file
 # ================================================================
 $step2File = "$outDir\step2_tagged.csv"
+$step2Source = if ($step2Input) { $step2Input } else { $step2File }
 
 Write-Host ""
 Write-Host "=== STEP 2: Tagging files with mnemonics ===" -ForegroundColor Cyan
 
-if (Test-Path $step2File) {
+if ($step2Input) {
+    Write-Host "  Using existing file (override): $step2Input"
+} elseif (Test-Path $step2File) {
     $step2Count = (Import-Csv $step2File).Count
     Write-Host "  Output exists ($step2Count rows), skipping."
     Write-Host "  Delete to re-run: $step2File"
 } else {
-    $files = Import-Csv $step1File
+    $files = Import-Csv $step1Source
     $tagged = [System.Collections.ArrayList]@()
     $counter = 0
 
@@ -165,27 +194,49 @@ if (Test-Path $step2File) {
 # STEP 3: DEDUPLICATE - Latest file per mnemonic
 # ================================================================
 $step3File = "$outDir\step3_latest.csv"
+$step3Source = if ($step3Input) { $step3Input } else { $step3File }
 
 Write-Host ""
 Write-Host "=== STEP 3: Deduplicating ===" -ForegroundColor Cyan
 
-if (Test-Path $step3File) {
+if ($step3Input) {
+    Write-Host "  Using existing file (override): $step3Input"
+} elseif (Test-Path $step3File) {
     $step3Count = (Import-Csv $step3File).Count
     Write-Host "  Output exists ($step3Count mnemonics), skipping."
     Write-Host "  Delete to re-run: $step3File"
 } else {
-    # Prefer files WITH 'success', then most recently modified
-    $latest = Import-Csv $step2File |
-        Sort-Object Mnemonic,
-                    @{Expression = { if ($_.HasSuccess -eq 'Yes') { 0 } else { 1 } }},
-                    @{Expression = { [datetime]$_.LastModified }; Descending = $true} |
-        Group-Object Mnemonic |
-        ForEach-Object { $_.Group | Select-Object -First 1 }
+    $step2Data = Import-Csv $step2Source
+
+    # Check if HasSuccess column exists in the input
+    $hasSuccessCol = ($step2Data | Get-Member -Name 'HasSuccess' -MemberType NoteProperty) -ne $null
+
+    if ($hasSuccessCol) {
+        # Prefer files WITH 'success', then most recently modified
+        $latest = $step2Data |
+            Sort-Object Mnemonic,
+                        @{Expression = { if ($_.HasSuccess -eq 'Yes') { 0 } else { 1 } }},
+                        @{Expression = { [datetime]$_.LastModified }; Descending = $true} |
+            Group-Object Mnemonic |
+            ForEach-Object { $_.Group | Select-Object -First 1 }
+    } else {
+        # No HasSuccess column (v2 format) - sort by date only
+        Write-Host "  (Input has no HasSuccess column - sorting by date only)" -ForegroundColor Yellow
+        $latest = $step2Data |
+            Sort-Object Mnemonic,
+                        @{Expression = { [datetime]$_.LastModified }; Descending = $true} |
+            Group-Object Mnemonic |
+            ForEach-Object { $_.Group | Select-Object -First 1 }
+    }
 
     $latest | Export-Csv -LiteralPath $step3File -NoTypeInformation
 
     $withSuccess = @($latest | Where-Object { $_.HasSuccess -eq 'Yes' }).Count
-    Write-Host "  Unique mnemonics: $($latest.Count)  ($withSuccess with 'success' in file)"
+    if ($hasSuccessCol) {
+        Write-Host "  Unique mnemonics: $($latest.Count)  ($withSuccess with 'success' in file)"
+    } else {
+        Write-Host "  Unique mnemonics: $($latest.Count)"
+    }
 
     # Report any mnemonics not found in any file
     $foundMne = $latest.Mnemonic
@@ -206,7 +257,11 @@ $step4File = "$outDir\step4_extracts.txt"
 Write-Host ""
 Write-Host "=== STEP 4: Extracting logic blocks ===" -ForegroundColor Cyan
 
-$deduped = Import-Csv $step3File
+$deduped = Import-Csv $step3Source
+$hasSuccessInInput = ($deduped | Get-Member -Name 'HasSuccess' -MemberType NoteProperty) -ne $null
+if (-not $hasSuccessInInput) {
+    Write-Host "  (Input has no HasSuccess column - will compute per file)" -ForegroundColor Yellow
+}
 
 # Always regenerate extracts
 if (Test-Path $step4File) { Remove-Item $step4File }
@@ -261,6 +316,14 @@ foreach ($entry in $deduped) {
     if ($matchLines.Count -eq 0) {
         $noMatchMne += $mne
         continue
+    }
+
+    # --- Compute HasSuccess if not in input ---
+    $hasSuccessVal = $entry.HasSuccess
+    if (-not $hasSuccessVal) {
+        $rawContent = Get-Content -LiteralPath $entry.FullPath -Raw -ErrorAction SilentlyContinue
+        $hasSuccessVal = 'No'
+        if ($rawContent -and $rawContent -match '(?i)\bsuccess\b') { $hasSuccessVal = 'Yes' }
     }
 
     # --- Build context windows ---
@@ -346,7 +409,7 @@ foreach ($entry in $deduped) {
     [void]$sb.AppendLine("MATCH METHOD:  $matchMethod")
     [void]$sb.AppendLine("REFERENCES:    $($matchLines.Count) occurrence(s) in file")
     [void]$sb.AppendLine("BLOCKS:        $($merged.Count) extracted (context: $contextAbove above / $contextBelow below)")
-    [void]$sb.AppendLine("HAS 'SUCCESS': $($entry.HasSuccess)")
+    [void]$sb.AppendLine("HAS 'SUCCESS': $hasSuccessVal")
     [void]$sb.AppendLine("--------------------------------------------------------------------------------")
 
     # --- Write blocks ---
@@ -404,8 +467,9 @@ $step5File = "$outDir\step5_summary.csv"
 Write-Host ""
 Write-Host "=== STEP 5: Generating summary ===" -ForegroundColor Cyan
 
-# Reload deduped in case step 3 was skipped
-$dedupedForSummary = Import-Csv $step3File
+# Reload deduped from source (works with both v2 and v3 files)
+$dedupedForSummary = Import-Csv $step3Source
+$summaryHasSuccessCol = ($dedupedForSummary | Get-Member -Name 'HasSuccess' -MemberType NoteProperty) -ne $null
 
 $summary = foreach ($mne in $mnemonics) {
     $info  = $mneLookup[$mne]
@@ -415,9 +479,20 @@ $summary = foreach ($mne in $mnemonics) {
     $prodVal     = 'N/A'; if ($info)  { $prodVal     = $info.Product }
     $primaryVal  = 'N/A'; if ($info)  { $primaryVal  = $info.Clean_Primary }
     $foundVal    = 'No';  if ($entry) { $foundVal    = 'Yes' }
-    $successVal  = 'N/A'; if ($entry) { $successVal  = $entry.HasSuccess }
     $fileVal     = '';     if ($entry) { $fileVal     = $entry.FileName }
     $modVal      = '';     if ($entry) { $modVal      = $entry.LastModified }
+
+    # Handle HasSuccess: use column if present, otherwise compute
+    $successVal = 'N/A'
+    if ($entry) {
+        if ($summaryHasSuccessCol -and $entry.HasSuccess) {
+            $successVal = $entry.HasSuccess
+        } else {
+            $rawContent = Get-Content -LiteralPath $entry.FullPath -Raw -ErrorAction SilentlyContinue
+            $successVal = 'No'
+            if ($rawContent -and $rawContent -match '(?i)\bsuccess\b') { $successVal = 'Yes' }
+        }
+    }
 
     [PSCustomObject]@{
         Mnemonic        = $mne
