@@ -55,10 +55,11 @@ For each mnemonic, provide:
 
 1. MNEMONIC: the 3-letter code
 2. EXPECTED SUCCESS: (this is already in the section header — copy it)
-3. KEYWORDS MATCHED: which of the mapped keywords actually appeared in the useful code (not all keyword hits — only the ones in the relevant blocks)
-4. ACTUAL SUCCESS LOGIC: Describe in plain language what the SAS code is checking. What conditions must be true for a client to be counted as "successful"? Be specific — include table names, column names, date ranges, or flag values if visible.
-5. MATCH: Does the actual logic match the expected success? (Yes / No / Partially / Cannot determine)
-6. GAPS: If there are missing pieces or the code is cut off, note what is missing.
+3. KEYWORDS MATCHED: which of the mapped keywords actually appeared in the relevant code blocks (not all keyword hits — only the ones that matter)
+4. SAS CODE: Copy the exact SAS code that defines or measures success for this mnemonic. Include the full code block — the SQL/SAS statements, WHERE clauses, IF conditions, CASE statements, table references, and variable assignments that determine success. Copy the code exactly as it appears in the extract. If the success logic spans multiple blocks, include all relevant blocks. Do not paraphrase or summarize the code — I need the actual code as-is so I can reuse it.
+5. PLAIN LANGUAGE: In one or two sentences, describe what this code is doing in business terms.
+6. MATCH: Does the actual logic match the expected success? (Yes / No / Partially / Cannot determine)
+7. GAPS: If the code is cut off or incomplete, note what is missing.
 
-Keep each answer short and factual. Do not explain SAS syntax. Focus on the business logic — what is being measured.
+IMPORTANT: The SAS code in item 4 is the most important part. Copy it exactly. Do not skip it. Do not replace it with a description.
 ```
