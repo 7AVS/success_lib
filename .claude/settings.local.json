@@ -4,7 +4,12 @@
       "Bash(python build.py:*)",
       "Bash(python3:*)",
       "Bash(pip3 install:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(dpkg:*)",
+      "Bash(pip3 list:*)",
+      "Bash(pip install python-docx markdown fpdf2)",
+      "Bash(pip install:*)",
+      "Bash(ls:*)"
     ]
   }
 }
