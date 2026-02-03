@@ -1,3 +1,7 @@
+# LEGACY — Use step4a_extract_success.ps1 or step4b_extract_keywords.ps1 instead.
+# This script extracts code around the mnemonic reference, which typically finds
+# CLIENT SELECTION code (who got the campaign), not the success measurement logic.
+#
 # Step 4 - Extract: pull annotated logic blocks from SAS files
 # Input needs columns: Mnemonic, FileName, LastModified, FullPath
 # HasSuccess column is optional (compatible with v2 output: sas_latest_per_mnemonic.csv)

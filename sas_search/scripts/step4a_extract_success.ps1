@@ -1,13 +1,14 @@
 # Step 4a - Extract: pull code blocks around the word "success"
 # Searches each SAS file for "success" and pulls 20 lines above / 20 below
 # Does NOT search for the mnemonic — searches for the success logic itself
+# Input: step 2 tagged file (all files per mnemonic) or step 3 deduped file (one per mnemonic)
 #
 # Output markers:
 #   >>>  = line where "success" appears
 #    ?   = line with conditional logic (if/where/case/when)
 
-# === IN: deduplicated file from step 3 (or v2 output: sas_latest_per_mnemonic.csv) ===
-$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step3_latest.csv"
+# === IN: tagged file from step 2 ===
+$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step2_tagged.csv"
 
 # === IN: mnemonic reference file ===
 $mappingFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\sas_search\keyword_mapping.csv"

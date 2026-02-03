@@ -1,4 +1,4 @@
-# Split extract files into chunks under 12,000 characters for Helios Assist
+# Split extract files into chunks under 275,000 characters for Helios Assist
 # Splits on mnemonic section boundaries (never cuts a section in half)
 # Each section starts with a line of ####
 
@@ -9,7 +9,7 @@ $inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & 
 $outFolder = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\split"
 
 # === SETTINGS ===
-$maxChars = 12000
+$maxChars = 275000
 
 # ---------------------------------------------------------------
 if (-not (Test-Path $outFolder)) { New-Item -Path $outFolder -ItemType Directory -Force | Out-Null }

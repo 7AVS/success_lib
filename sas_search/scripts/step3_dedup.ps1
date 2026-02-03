@@ -1,3 +1,7 @@
+# OPTIONAL — Not part of the default pipeline.
+# The default flow is: step 1 → step 2 → step 4a (no dedup).
+# Use this only if you specifically want to narrow down to one file per mnemonic.
+#
 # Step 3 - Deduplicate: keep one file per mnemonic (latest, prefer success)
 # Input needs columns: Mnemonic, FileName, LastModified, FullPath
 # HasSuccess column is optional (compatible with v2 output)

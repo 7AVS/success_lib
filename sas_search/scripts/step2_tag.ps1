@@ -1,4 +1,5 @@
 # Step 2 - Tag: identify which mnemonics appear in each .sas file
+# Also reports which mnemonics from keyword_mapping.csv were not found in any file
 # Input needs column: FullPath (compatible with v1 output and step1 output)
 
 # === IN: file list from step 1 (or v1 output) ===
@@ -41,15 +42,27 @@ foreach ($file in $files) {
 
     foreach ($mne in $foundMne) {
         [void]$tagged.Add([PSCustomObject]@{
-            Mnemonic      = $mne
-            FileName      = $file.FileName
-            LastModified  = $fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
-            FullPath      = $file.FullPath
-            MnemonicCount = @($foundMne).Count
-            HasSuccess    = $hasSuccess
+            Mnemonic     = $mne
+            FileName     = $file.FileName
+            LastModified = $fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")
+            FullPath     = $file.FullPath
+            HasSuccess   = $hasSuccess
         })
     }
 }
 
 $tagged | Export-Csv -LiteralPath $outFile -NoTypeInformation
-Write-Host "Done. Tagged $($tagged.Count) mnemonic-file combos - saved to $outFile"
+
+# --- Report missing mnemonics ---
+$allMnemonics = $mapping.Mnemonic
+$foundMne = $tagged | ForEach-Object { $_.Mnemonic } | Select-Object -Unique
+$missing = $allMnemonics | Where-Object { $_ -notin $foundMne }
+
+Write-Host ""
+Write-Host "Tagged $($tagged.Count) mnemonic-file combos across $($foundMne.Count) unique mnemonics"
+if ($missing.Count -gt 0) {
+    Write-Host "NOT FOUND in any file ($($missing.Count)): $($missing -join ', ')" -ForegroundColor Yellow
+} else {
+    Write-Host "All $($allMnemonics.Count) mnemonics found"
+}
+Write-Host "Saved to $outFile"

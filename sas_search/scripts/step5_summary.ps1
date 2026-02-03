@@ -1,9 +1,10 @@
 # Step 5 - Summary: status dashboard for all mnemonics
+# Works with step 2 output (multiple files per mnemonic) or step 3 output (one per mnemonic)
 # Input needs columns: Mnemonic, FileName, LastModified, FullPath
-# HasSuccess column is optional (compatible with v2 output: sas_latest_per_mnemonic.csv)
+# HasSuccess column is optional
 
-# === IN: deduplicated file from step 3 (or v2 output: sas_latest_per_mnemonic.csv) ===
-$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step3_latest.csv"
+# === IN: tagged file from step 2 ===
+$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step2_tagged.csv"
 
 # === IN: mnemonic reference file ===
 $mappingFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\sas_search\keyword_mapping.csv"
@@ -21,29 +22,42 @@ $mnemonics = $mapping.Mnemonic
 $mneLookup = @{}
 foreach ($row in $mapping) { $mneLookup[$row.Mnemonic] = $row }
 
-$deduped = Import-Csv $inFile
-$hasSuccessCol = ($deduped | Get-Member -Name 'HasSuccess' -MemberType NoteProperty) -ne $null
+$data = Import-Csv $inFile
+$hasSuccessCol = ($data | Get-Member -Name 'HasSuccess' -MemberType NoteProperty) -ne $null
 
 $summary = foreach ($mne in $mnemonics) {
-    $info  = $mneLookup[$mne]
-    $entry = $deduped | Where-Object { $_.Mnemonic -eq $mne }
+    $info    = $mneLookup[$mne]
+    $entries = @($data | Where-Object { $_.Mnemonic -eq $mne })
 
-    $descVal     = 'N/A'; if ($info)  { $descVal     = $info.Description }
-    $prodVal     = 'N/A'; if ($info)  { $prodVal     = $info.Product }
-    $primaryVal  = 'N/A'; if ($info)  { $primaryVal  = $info.Clean_Primary }
-    $foundVal    = 'No';  if ($entry) { $foundVal    = 'Yes' }
-    $fileVal     = '';     if ($entry) { $fileVal     = $entry.FileName }
-    $modVal      = '';     if ($entry) { $modVal      = $entry.LastModified }
+    $descVal    = 'N/A'; if ($info) { $descVal    = $info.Description }
+    $prodVal    = 'N/A'; if ($info) { $prodVal    = $info.Product }
+    $primaryVal = 'N/A'; if ($info) { $primaryVal = $info.Clean_Primary }
 
-    $successVal = 'N/A'
-    if ($entry) {
-        if ($hasSuccessCol -and $entry.HasSuccess) {
-            $successVal = $entry.HasSuccess
+    $foundVal   = 'No'
+    $fileCount  = 0
+    $successVal = 'No'
+    $fileNames  = ''
+    $latestMod  = ''
+
+    if ($entries.Count -gt 0) {
+        $foundVal  = 'Yes'
+        $fileCount = $entries.Count
+
+        # Check if any file has success
+        if ($hasSuccessCol) {
+            $hasAny = $entries | Where-Object { $_.HasSuccess -eq 'Yes' }
+            if ($hasAny) { $successVal = 'Yes' }
         } else {
-            $rawContent = Get-Content -LiteralPath $entry.FullPath -Raw -ErrorAction SilentlyContinue
-            $successVal = 'No'
-            if ($rawContent -and $rawContent -match '(?i)\bsuccess\b') { $successVal = 'Yes' }
+            foreach ($e in $entries) {
+                $rawContent = Get-Content -LiteralPath $e.FullPath -Raw -ErrorAction SilentlyContinue
+                if ($rawContent -and $rawContent -match '(?i)\bsuccess\b') { $successVal = 'Yes'; break }
+            }
         }
+
+        # List unique file names and find latest modified date
+        $uniqueFiles = $entries | Select-Object -Property FileName -Unique
+        $fileNames = ($uniqueFiles.FileName) -join '; '
+        $latestMod = ($entries | Sort-Object @{Expression = { [datetime]$_.LastModified }; Descending = $true} | Select-Object -First 1).LastModified
     }
 
     [PSCustomObject]@{
@@ -52,9 +66,10 @@ $summary = foreach ($mne in $mnemonics) {
         Product         = $prodVal
         ExpectedSuccess = $primaryVal
         FileFound       = $foundVal
+        FileCount       = $fileCount
         HasSuccessTerm  = $successVal
-        FileName        = $fileVal
-        LastModified    = $modVal
+        Files           = $fileNames
+        LatestModified  = $latestMod
     }
 }
 

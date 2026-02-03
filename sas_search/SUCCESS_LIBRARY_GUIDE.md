@@ -39,17 +39,34 @@ You need a PowerShell terminal to run the scripts.
 
 ---
 
-## The Scripts — Overview
+## The Pipeline
+
+The default pipeline is:
+
+```
+Step 1 (scan) → Step 2 (tag) → Step 4a (extract) → Split → Helios Assist
+```
 
 | Script | What it does | Input | Output |
 |--------|-------------|-------|--------|
 | `step1_scan.ps1` | Finds all .sas files containing any mnemonic | Network folder + `keyword_mapping.csv` | CSV of matching files |
 | `step2_tag.ps1` | Tags which mnemonics are in each file | Step 1 output + `keyword_mapping.csv` | CSV with mnemonic-file pairs |
-| `step3_dedup.ps1` | Keeps one file per mnemonic (latest) | Step 2 output + `keyword_mapping.csv` | CSV with one row per mnemonic |
-| `step4_extract.ps1` | Extracts code blocks around the mnemonic reference | Step 3 output + `keyword_mapping.csv` | Text file (client selection context) |
-| `step4a_extract_success.ps1` | Extracts code blocks around the word "success" | Step 3 output + `keyword_mapping.csv` | Text file (success logic context) |
-| `step4b_extract_keywords.ps1` | Extracts code blocks around mapped keywords | Step 3 output + `keyword_mapping.csv` | Text file (keyword-matched context) |
-| `step5_summary.ps1` | Status dashboard for all mnemonics | Step 3 output + `keyword_mapping.csv` | CSV summary |
+| `step4a_extract_success.ps1` | Extracts code blocks around the word "success" | Step 2 output + `keyword_mapping.csv` | Text file with code extracts |
+| `split_extracts.ps1` | Splits large text files for Helios | Any step 4 text output | Multiple text files (part1.txt, part2.txt, etc.) |
+
+**If step 4a has gaps** (mnemonics came back as NOISE or LABEL ONLY from Helios):
+
+| Script | What it does |
+|--------|-------------|
+| `step4b_extract_keywords.ps1` | Fallback — extracts code blocks around mapped business keywords |
+
+**Other tools:**
+
+| Script | What it does |
+|--------|-------------|
+| `step5_summary.ps1` | Dashboard CSV — status of every mnemonic |
+| `step3_dedup.ps1` | Optional — narrows to one file per mnemonic (not used in default pipeline) |
+| `step4_extract.ps1` | Legacy — extracts around mnemonic reference (finds client selection code, not success logic) |
 
 Each script is standalone. You can run any one of them by itself as long as you have the input file it needs.
 
@@ -94,107 +111,94 @@ Scans a network folder for `.sas` files that contain any mnemonic code. This is 
 
 ## Step 2 — Tag
 
-Opens each file from step 1 and records which specific mnemonics are inside it, when it was last modified, and whether it contains the word "success".
+Opens each file from step 1 and records which specific mnemonics are inside it, when it was last modified, and whether it contains the word "success". Also reports which mnemonics from `keyword_mapping.csv` were not found in any file.
+
+Step 2 keeps **all files per mnemonic** — no deduplication. A mnemonic that appears in 5 different SAS files will have 5 rows.
 
 **Change these paths:**
 - `$inFile` — the CSV from step 1 (or the v1 output: `sas_mnemonic_files.csv`)
 - `$mappingFile` — path to `keyword_mapping.csv`
 - `$outFile` — where to save the results
 
-**Output columns:** Mnemonic, FileName, LastModified, FullPath, MnemonicCount, HasSuccess
+**Output columns:** Mnemonic, FileName, LastModified, FullPath, HasSuccess
 
 ---
 
-## Step 3 — Deduplicate
+## Step 4a — Extract (default)
 
-Keeps only one file per mnemonic. Prefers files that contain "success", then picks the most recently modified.
+Searches for the word **"success"** in each SAS file. Pulls 20 lines above and 20 below each match. This targets the actual success measurement logic directly.
+
+Since step 2 keeps all files per mnemonic, step 4a will extract from **every file** for each mnemonic. The same mnemonic may produce multiple sections in the output — one per file. The Helios prompts handle this by asking the AI to compare versions and pick the best one.
 
 **Change these paths:**
-- `$inFile` — the CSV from step 2 (or the v2 output: `sas_success_by_mnemonic.csv`)
-- `$mappingFile` — path to `keyword_mapping.csv`
-- `$outFile` — where to save the results
-
-**Output columns:** same as step 2, one row per mnemonic
-
----
-
-## Step 4 — Extract (3 Versions)
-
-There are three versions of step 4. Each one searches the SAS files differently. Use whichever gives the best results — or run all three.
-
-### Step 4 (original) — `step4_extract.ps1`
-
-Searches for the **mnemonic code itself** (`'FTH'`, `"FTH"`) in the SAS file. Useful for seeing where the mnemonic is referenced, but this usually pulls the **client selection code** (who got the campaign), not the success measurement.
-
-### Step 4a — `step4a_extract_success.ps1`
-
-Searches for the word **"success"** in the SAS file. Pulls 20 lines above and 20 below each match. This targets the actual success measurement logic directly.
-
-### Step 4b — `step4b_extract_keywords.ps1`
-
-Searches for the **mapped keywords** specific to each mnemonic (from the `Suggested_Keywords` column in `keyword_mapping.csv`). For example, for FTH it searches for "mortgage, open, approved, funded, fhsa, homebuyer, close, booked". The `>>>` markers show which keyword matched.
-
-**All three versions use the same input and paths:**
-- `$inFile` — the CSV from step 3 (or the v2 output: `sas_latest_per_mnemonic.csv`)
+- `$inFile` — the CSV from step 2
 - `$mappingFile` — path to `keyword_mapping.csv`
 - `$outFile` — where to save the text file
 
-**Settings you can adjust (in step 4, 4a, and 4b):**
+**Settings you can adjust:**
 - `$contextAbove` — lines to show above each match (default: 20)
 - `$contextBelow` — lines to show below each match (default: 20)
-- `$maxBlocks` — max code blocks per mnemonic (default: 10)
+- `$maxBlocks` — max code blocks per mnemonic per file (default: 10)
 
 **Output markers:**
 
 | Marker | Meaning |
 |--------|---------|
-| `>>>` | Line where the search term was found (mnemonic, "success", or keyword) |
-| `>>>[keyword]` | (step 4b only) Shows which keyword matched |
-| `*` | (step 4 only) Line with success/flag/indicator term |
+| `>>>` | Line where "success" was found |
 | `?` | Line with conditional logic (if/where/case/when) |
 | (blank) | Context line |
 
 ---
 
-## Step 5 — Summary
+## Step 4b — Extract (fallback)
 
-Generates a dashboard CSV showing the status of every mnemonic: found or not, has success logic or not.
+Searches for **mapped keywords** specific to each mnemonic (from the `Suggested_Keywords` column in `keyword_mapping.csv`). For example, for FTH it searches for "mortgage, open, approved, funded, fhsa, homebuyer, close, booked".
+
+Use this only for mnemonics where step 4a didn't find usable code — meaning the word "success" wasn't helpful but the actual logic might use business-specific terms instead.
+
+**Same paths and settings as step 4a.**
+
+**Additional output marker:**
+
+| Marker | Meaning |
+|--------|---------|
+| `>>>[keyword]` | Line where a mapped keyword was found (keyword name in brackets) |
+
+---
+
+## Split Script — `split_extracts.ps1`
+
+Splits large step 4 output files into smaller parts that fit within Helios Assist's character limit. Splits on mnemonic section boundaries (never cuts a section in half).
 
 **Change these paths:**
-- `$inFile` — the CSV from step 3 (or the v2 output: `sas_latest_per_mnemonic.csv`)
+- `$inFile` — the text file to split (any step 4a/4b output)
+- `$outFolder` — folder where parts go (created automatically)
+- `$maxChars` — max characters per part (default: 275,000)
+
+**Output:** `part1.txt`, `part2.txt`, etc. in the output folder. If a single mnemonic section is larger than the limit, it gets saved as its own part with a warning.
+
+---
+
+## Step 5 — Summary
+
+Generates a dashboard CSV showing the status of every mnemonic: found or not, how many files, which have success logic.
+
+**Change these paths:**
+- `$inFile` — the CSV from step 2
 - `$mappingFile` — path to `keyword_mapping.csv`
 - `$outFile` — where to save the summary
 
-**Output columns:** Mnemonic, Description, Product, ExpectedSuccess, FileFound, HasSuccessTerm, FileName, LastModified
+**Output columns:** Mnemonic, Description, Product, ExpectedSuccess, FileFound, FileCount, HasSuccessTerm, Files, LatestModified
 
 ---
 
 ## Using Helios Assist to Extract Success Definitions
 
-After running step 4a or 4b, you'll have a text file with SAS code extracts. The next step is to submit that file to **Helios Assist** to identify and extract the actual success code.
+After running step 4a, you'll have a text file with SAS code extracts. The next step is to submit that file to **Helios Assist** to identify and extract the actual success code.
 
 ### File Size Limit
 
-Helios Assist has a limit of approximately **12,800 characters (~250 KB)** per submission. If your output file is larger than that, you need to split it.
-
-### How to Check File Size
-
-1. Find the output file in File Explorer
-2. Right-click it and select **Properties**
-3. Look at the **Size** field
-4. If it's over 250 KB, you need to split it (see below)
-
-### How to Split the File
-
-The output file is organized by mnemonic — each section starts with a line of `####`. You can split by copying groups of mnemonics into separate text files.
-
-1. Open the output file in VS Code
-2. Use **Ctrl+F** and search for `####` to jump between mnemonic sections
-3. Select a group of mnemonic sections (aim for under 250 KB each)
-4. Copy (**Ctrl+C**) and paste (**Ctrl+V**) into a new file
-5. Save each chunk as `part1.txt`, `part2.txt`, etc.
-
-Alternatively, you can estimate: each mnemonic section is roughly 2-5 KB. So a 500 KB file with 46 mnemonics could be split into 2 files of ~23 mnemonics each.
+Helios Assist has a limit of approximately **275,000 characters** per submission. If your output file is larger than that, split it using `split_extracts.ps1`.
 
 ### Submitting to Helios Assist
 
@@ -204,43 +208,54 @@ The prompt files are in: `sas_search/prompts/`
 
 | Prompt file | Use with |
 |-------------|----------|
-| `prompt_step4a_success.md` | Output from `step4a_extract_success.ps1` |
-| `prompt_step4b_keywords.md` | Output from `step4b_extract_keywords.ps1` |
+| `prompt_broad_4a_success.md` | Step 4a output (default — multiple files per mnemonic) |
+| `prompt_broad_4b_keywords.md` | Step 4b output (fallback — multiple files per mnemonic) |
+| `prompt_step4a_success.md` | Step 4a output if you used optional step 3 dedup (one file per mnemonic) |
+| `prompt_step4b_keywords.md` | Step 4b output if you used optional step 3 dedup (one file per mnemonic) |
+
+For the default pipeline (no step 3), use the **broad** prompts. These handle multiple files per mnemonic — they ask the AI to compare versions by file name and date, then pick the best one.
+
+### Recommended Workflow
+
+1. **Run the default pipeline**: step 1 → step 2 → step 4a → split if needed
+2. **Submit to Helios** with `prompt_broad_4a_success.md` — run Phase 1
+3. **Review Phase 1 results.** Note which mnemonics came back as LABEL ONLY, NOISE, or UNCLEAR
+4. **For those gaps**: run step 4b for those mnemonics → submit with `prompt_broad_4b_keywords.md`
 
 ### Phase 1 — Scan and Categorize (do this first)
 
 This is a quick pass to find out which mnemonics have usable code and which are noise.
 
-1. Open the prompt file that matches your step 4 version
+1. Open the prompt file that matches your extraction type
 2. Upload your output file (or paste the content) to Helios Assist
 3. Copy the **PHASE 1** prompt from the prompt file and paste it into Helios Assist
 4. Submit
 
-Helios will return a table like:
+Helios will return a categorization table:
 
-| Mnemonic | Category | Note |
-|----------|----------|------|
-| FTH | COMPLETE | Success defined as mortgage funded within 90 days |
-| MOM | LABEL ONLY | "success" appears in a column alias only |
-| PCQ | PARTIAL | Card activation check visible but cutoff |
+| Mnemonic | File | Modified | Category | Note |
+|----------|------|----------|----------|------|
+| FTH | prog_a.sas | 2024-11-15 | COMPLETE | Success defined as mortgage funded within 90 days |
+| FTH | prog_b.sas | 2023-06-20 | NOISE | "mortgage" matched in a comment only |
+| MOM | renew_v3.sas | 2024-09-01 | PARTIAL | Renewal flag visible but conditions cut off |
 
-**What the categories mean:**
+**Categories for step 4a output:**
 
-For step 4a output:
 | Category | Meaning | Action |
 |----------|---------|--------|
 | COMPLETE | Full success logic is visible | Proceed to Phase 2 |
 | PARTIAL | Some logic visible but cut off | Proceed to Phase 2 |
-| LABEL ONLY | "success" is just a variable name, no logic | Skip — not useful |
-| UNCLEAR | Cannot determine | Skip or investigate manually |
+| LABEL ONLY | "success" is just a variable name, no logic | Try step 4b |
+| UNCLEAR | Cannot determine | Try step 4b |
 
-For step 4b output:
+**Categories for step 4b output:**
+
 | Category | Meaning | Action |
 |----------|---------|--------|
 | USEFUL | Code clearly relates to success measurement | Proceed to Phase 2 |
 | PARTIAL | Some relevant logic but incomplete | Proceed to Phase 2 |
-| NOISE | Keywords matched but code is unrelated | Skip — not useful |
-| UNCLEAR | Cannot determine | Skip or investigate manually |
+| NOISE | Keywords matched but code is unrelated | Manual investigation needed |
+| UNCLEAR | Cannot determine | Manual investigation needed |
 
 ### Phase 2 — Extract the Code (only for usable mnemonics)
 
@@ -262,7 +277,7 @@ Helios will return for each mnemonic:
 
 ### If the File is Too Large for One Submission
 
-1. Split the file as described above
+1. Split the file using `split_extracts.ps1`
 2. Run Phase 1 on each part separately
 3. Combine the Phase 1 tables from all parts
 4. Run Phase 2 only for the usable mnemonics (you can combine them into one Phase 2 request if it fits)
@@ -276,8 +291,8 @@ These scripts are backwards compatible. If you already ran v1 or v2, you can ski
 | You already have | Point it to | Then run from |
 |-----------------|------------|---------------|
 | `sas_mnemonic_files.csv` (v1 output) | Step 2 `$inFile` | Step 2 |
-| `sas_success_by_mnemonic.csv` (v2 section 1) | Step 3 `$inFile` | Step 3 |
-| `sas_latest_per_mnemonic.csv` (v2 section 2) | Step 4/4a/4b `$inFile` | Step 4 |
+| `sas_success_by_mnemonic.csv` (v2 section 1) | Step 4a/4b `$inFile` | Step 4a |
+| `sas_latest_per_mnemonic.csv` (v2 section 2) | Step 4a/4b `$inFile` | Step 4a |
 
 The `HasSuccess` column is optional — if your file doesn't have it, the script computes it automatically.
 
@@ -313,11 +328,14 @@ The scripts read the mnemonic list from this file — no code changes needed.
 | `keyword_mapping.csv` | `sas_search/` | Master list of all campaigns — source of truth |
 | `keyword_mapping_final.csv` | `sas_search/` | Campaigns grouped by product (reference only) |
 | `step1_scan.ps1` | `sas_search/scripts/` | Broad scan script |
-| `step2_tag.ps1` | `sas_search/scripts/` | Tagging script |
-| `step3_dedup.ps1` | `sas_search/scripts/` | Deduplication script |
-| `step4_extract.ps1` | `sas_search/scripts/` | Extract around mnemonic reference |
-| `step4a_extract_success.ps1` | `sas_search/scripts/` | Extract around "success" keyword |
-| `step4b_extract_keywords.ps1` | `sas_search/scripts/` | Extract around mapped keywords |
+| `step2_tag.ps1` | `sas_search/scripts/` | Tagging script (+ missing mnemonics report) |
+| `step4a_extract_success.ps1` | `sas_search/scripts/` | Extract around "success" keyword (default) |
+| `step4b_extract_keywords.ps1` | `sas_search/scripts/` | Extract around mapped keywords (fallback) |
 | `step5_summary.ps1` | `sas_search/scripts/` | Summary dashboard |
-| `prompt_step4a_success.md` | `sas_search/prompts/` | Helios prompts for step 4a output |
-| `prompt_step4b_keywords.md` | `sas_search/prompts/` | Helios prompts for step 4b output |
+| `split_extracts.ps1` | `sas_search/scripts/` | Split large text files for Helios Assist |
+| `step3_dedup.ps1` | `sas_search/scripts/` | Optional — dedup to one file per mnemonic |
+| `step4_extract.ps1` | `sas_search/scripts/` | Legacy — extract around mnemonic reference |
+| `prompt_broad_4a_success.md` | `sas_search/prompts/` | Helios prompts for step 4a output (default) |
+| `prompt_broad_4b_keywords.md` | `sas_search/prompts/` | Helios prompts for step 4b output (fallback) |
+| `prompt_step4a_success.md` | `sas_search/prompts/` | Helios prompts for step 4a with optional dedup |
+| `prompt_step4b_keywords.md` | `sas_search/prompts/` | Helios prompts for step 4b with optional dedup |

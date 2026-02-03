@@ -1,14 +1,16 @@
-# Step 4b - Extract: pull code blocks around mapped keywords per mnemonic
+# Step 4b - Extract (fallback): pull code blocks around mapped keywords per mnemonic
 # For each mnemonic, reads its Suggested_Keywords from keyword_mapping.csv
 # then searches the SAS file for those specific keywords
 # Pulls 20 lines above / 20 below each keyword match
+# Use this when step 4a didn't find usable code for specific mnemonics
+# Input: step 2 tagged file (all files per mnemonic) or step 3 deduped file (one per mnemonic)
 #
 # Output markers:
 #   >>>  = line where a mapped keyword appears (keyword shown in marker)
 #    ?   = line with conditional logic (if/where/case/when)
 
-# === IN: deduplicated file from step 3 (or v2 output: sas_latest_per_mnemonic.csv) ===
-$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step3_latest.csv"
+# === IN: tagged file from step 2 ===
+$inFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\pipeline\step2_tagged.csv"
 
 # === IN: mnemonic reference file (must have Suggested_Keywords column) ===
 $mappingFile = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\wrkgrp16\Marketing Services & Transformation\Marketing Analytics\Andre Santos\Success Library\sas_search\keyword_mapping.csv"
