@@ -1,0 +1,25 @@
+data_asset,clnt_no,acct_no,lob,prod,sub_prod,open_amt,event_dt,event_attributes,event_type_cd,event_category,mnemonic,success_level
+card_acquisition,123456789,555001,Digital Footprint,VVD,Virtual Visa Debit,,2025-06-15,"{""sts_cd"":""06"",""srvc_id"":36}",1,product_open,VCN,1
+card_acquisition,987654321,555002,Digital Footprint,VVD,Virtual Visa Debit,,2025-06-18,"{""sts_cd"":""08"",""srvc_id"":36}",1,product_open,VCN,1
+card_acquisition,111222333,555003,Digital Footprint,VVD,Virtual Visa Debit,,2025-07-01,"{""sts_cd"":""06"",""srvc_id"":36}",1,product_open,VCN,1
+card_acquisition,444555666,555004,Digital Footprint,VVD,Virtual Visa Debit,,2025-11-29,"{""sts_cd"":""06"",""srvc_id"":36}",1,product_open,VDA,1
+card_acquisition,777888999,555005,Digital Footprint,VVD,Virtual Visa Debit,,2025-11-30,"{""sts_cd"":""08"",""srvc_id"":36}",1,product_open,VDA,1
+card_acquisition,222333444,555006,Digital Footprint,VVD,Virtual Visa Debit,,2025-12-01,"{""sts_cd"":""06"",""srvc_id"":36}",1,product_open,VDA,1
+card_activation,123456789,555001,Digital Footprint,VVD,Virtual Visa Debit,,2025-06-20,"{""sts_cd"":""06"",""srvc_id"":36}",2,product_activation,VDT,1
+card_activation,987654321,555002,Digital Footprint,VVD,Virtual Visa Debit,,2025-06-25,"{""sts_cd"":""08"",""srvc_id"":36}",2,product_activation,VDT,1
+card_activation,111222333,555003,Digital Footprint,VVD,Virtual Visa Debit,,2025-07-10,"{""sts_cd"":""06"",""srvc_id"":36}",2,product_activation,VDT,1
+card_activation,333444555,555007,Digital Footprint,VVD,Virtual Visa Debit,,2025-08-05,"{""sts_cd"":""06"",""srvc_id"":36}",2,product_activation,VDT,1
+card_usage,123456789,555001,Payments,VVD,Standard Purchase,45.99,2025-06-25,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUI,1
+card_usage,123456789,555001,Payments,VVD,E-commerce Purchase,129.00,2025-07-02,"{""txn_tp"":13,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUI,1
+card_usage,987654321,555002,Payments,VVD,Recurring / Subscription,14.99,2025-07-10,"{""txn_tp"":12,""msg_tp"":""0220"",""srvc_cd"":36}",3,product_usage,VUI,1
+card_usage,111222333,555003,Payments,VVD,Standard Purchase,67.50,2025-07-15,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUI,1
+card_usage,444555666,555004,Payments,VVD,E-commerce Purchase,250.00,2025-12-05,"{""txn_tp"":13,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUT,2
+card_usage,777888999,555005,Payments,VVD,Standard Purchase,32.75,2025-12-10,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUT,2
+card_usage,333444555,555007,Payments,VVD,Recurring / Subscription,9.99,2025-08-20,"{""txn_tp"":12,""msg_tp"":""0220"",""srvc_cd"":36}",3,product_usage,VAW,2
+card_usage,222333444,555006,Payments,VVD,Standard Purchase,88.00,2025-12-15,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VAW,2
+wallet_provisioning,123456789,555001,Digital Footprint,VVD,Apple Pay,0,2025-06-22,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VUI,2
+wallet_provisioning,987654321,555002,Digital Footprint,VVD,Google Pay,0,2025-07-05,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VUI,2
+wallet_provisioning,444555666,555004,Digital Footprint,VVD,Apple Pay,0,2025-12-02,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VUT,1
+wallet_provisioning,777888999,555005,Digital Footprint,VVD,Samsung Pay,0,2025-12-08,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VUT,1
+wallet_provisioning,333444555,555007,Digital Footprint,VVD,Apple Pay,0,2025-08-12,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VAW,1
+wallet_provisioning,222333444,555006,Digital Footprint,VVD,Google Pay,0,2025-12-03,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VAW,1
