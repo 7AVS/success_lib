@@ -12,7 +12,8 @@
       "Bash(ls:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd source-to-target mapping template, IRI campaign tab, and updated docs\n\n- Updated success_queries.xlsx to follow source_to_target_mapping template\n  format with metadata table \\(Target Column | source table | source column/logic\\)\n  on top of each tab, followed by organic and campaign success queries\n- Added IRI \\(International Money Transfer\\) tab using DDWV01.EXT_CDS_CHNL_EVNT\n  with ACTVY_TYP_CD = ''031'' filter for transaction detection\n- Tabs renamed to {MNE}_Success format \\(VCN_Success through IRI_Success\\)\n- Updated VVD data dictionary, success events schema, and artifacts guide\n- Updated metric code registry with all 46 campaigns\n- Added quick_search.ps1 single-file PowerShell search script\n- Updated SAS search keyword mappings and pipeline scripts\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(find:*)"
     ]
   }
 }

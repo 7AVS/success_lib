@@ -714,7 +714,7 @@ select * from connection to teradata (
     FROM DDWV01.CR_APP_CLNT_RELTN        AS A
     JOIN DDWV01.OVRL_CR_APP              AS B
         ON B.CR_APP_ID  = A.CR_APP_ID
-        AND B.SYS_SRC   = A.SYS_SRC_ID
+        AND B.SYS_SRC_ID = A.SYS_SRC_ID
     JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
         ON A.CR_APP_ID          = C.CR_APP_ID
         AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
@@ -723,8 +723,9 @@ select * from connection to teradata (
         ON C.CR_APP_ID          = D.CR_APP_ID
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
-    WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
-      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+    WHERE D.APPL_FOR_PROD_TYP IN ('40','41','43')
+      AND B.APP_TYP = 'P'
+      AND D.PROD_APP_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_COMPL_DT IS NOT NULL
       AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
     ORDER BY D.PROD_APP_COMPL_DT DESC
@@ -747,7 +748,7 @@ select * from connection to teradata (
     FROM DDWV01.CR_APP_CLNT_RELTN        AS A
     JOIN DDWV01.OVRL_CR_APP              AS B
         ON B.CR_APP_ID  = A.CR_APP_ID
-        AND B.SYS_SRC   = A.SYS_SRC_ID
+        AND B.SYS_SRC_ID = A.SYS_SRC_ID
     JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
         ON A.CR_APP_ID          = C.CR_APP_ID
         AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
@@ -756,8 +757,9 @@ select * from connection to teradata (
         ON C.CR_APP_ID          = D.CR_APP_ID
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
-    WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
-      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+    WHERE D.APPL_FOR_PROD_TYP IN ('40','41','43')
+      AND B.APP_TYP = 'P'
+      AND D.PROD_APP_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_COMPL_DT IS NOT NULL
       AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
     GROUP BY 1, 2, D.APPL_FOR_PROD_TYP
@@ -788,7 +790,7 @@ select * from connection to teradata (
         ON T.CLNT_NO = A.CLNT_NO
     JOIN DDWV01.OVRL_CR_APP              AS B
         ON B.CR_APP_ID  = A.CR_APP_ID
-        AND B.SYS_SRC   = A.SYS_SRC_ID
+        AND B.SYS_SRC_ID = A.SYS_SRC_ID
     JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
         ON A.CR_APP_ID          = C.CR_APP_ID
         AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
@@ -798,8 +800,9 @@ select * from connection to teradata (
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
     WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
-      AND D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
-      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.APPL_FOR_PROD_TYP IN ('40','41','43')
+      AND B.APP_TYP = 'P'
+      AND D.PROD_APP_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_DT BETWEEN T.TREATMT_STRT_DT AND T.TREATMT_END_DT
       AND D.PROD_APP_COMPL_DT IS NOT NULL
       AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
@@ -825,7 +828,7 @@ select * from connection to teradata (
         ON T.CLNT_NO = A.CLNT_NO
     JOIN DDWV01.OVRL_CR_APP              AS B
         ON B.CR_APP_ID  = A.CR_APP_ID
-        AND B.SYS_SRC   = A.SYS_SRC_ID
+        AND B.SYS_SRC_ID = A.SYS_SRC_ID
     JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
         ON A.CR_APP_ID          = C.CR_APP_ID
         AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
@@ -835,8 +838,9 @@ select * from connection to teradata (
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
     WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
-      AND D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
-      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.APPL_FOR_PROD_TYP IN ('40','41','43')
+      AND B.APP_TYP = 'P'
+      AND D.PROD_APP_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_DT BETWEEN T.TREATMT_STRT_DT AND T.TREATMT_END_DT
       AND D.PROD_APP_COMPL_DT IS NOT NULL
       AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
@@ -886,6 +890,7 @@ select * from connection to teradata (
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
     WHERE HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND OWN.MTH_END_DT = (SELECT MAX(MTH_END_DT) FROM DG6V01.ARNGMNT_OWN_HIST)
       AND HIST.DT_OPENED >= DATE '2025-01-01'
     ORDER BY HIST.DT_OPENED DESC
 
@@ -911,6 +916,7 @@ select * from connection to teradata (
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
     WHERE HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND OWN.MTH_END_DT = (SELECT MAX(MTH_END_DT) FROM DG6V01.ARNGMNT_OWN_HIST)
       AND HIST.DT_OPENED >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
