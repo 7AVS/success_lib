@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate vvd_success_queries.xlsx - one tab per VVD campaign mnemonic.
+Generate success_queries.xlsx - one tab per campaign mnemonic.
 Each tab contains two sections:
   TOP:    Organic Success  (all events, no campaign filter)
   BOTTOM: Campaign Success (events joined to tactic population within treatment window)
@@ -294,6 +294,64 @@ TABS = [
 
 
 # ---------------------------------------------------------------------------
+# IRI  (International Money Transfer - any IMT transaction = success)
+# Source: DDWV01.EXT_CDS_CHNL_EVNT  |  ACTVY_TYP_CD = '031'
+# ---------------------------------------------------------------------------
+_IMT_ORGANIC = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+CREATE TABLE work.organic_success AS
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT DISTINCT
+        CLNT_NO,
+        CAPTR_DT  AS SUCCESS_DT
+    FROM DDWV01.EXT_CDS_CHNL_EVNT
+    WHERE ACTVY_TYP_CD = '031'        /* 031 = International Money Transfer */
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+
+def _imt_campaign(mnemonic):
+    return f"""\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+CREATE TABLE work.campaign_success AS
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT DISTINCT
+        A.CLNT_NO,
+        A.CAPTR_DT           AS SUCCESS_DT,
+        B.TACTIC_ID,
+        B.TREATMT_STRT_DT,
+        B.TREATMT_END_DT
+    FROM DDWV01.EXT_CDS_CHNL_EVNT        AS A
+    INNER JOIN DG6V01.TACTIC_EVNT_IP_AR_HIST AS B
+        ON A.CLNT_NO = B.CLNT_NO
+    WHERE A.ACTVY_TYP_CD = '031'          /* 031 = International Money Transfer */
+      AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mnemonic}'
+      AND A.CAPTR_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+
+# IRI tab added to the TABS list
+TABS.append(
+    (
+        "IRI",
+        "International Money Transfer Success",
+        "Metric: IMT Transaction | Source: DDWV01.EXT_CDS_CHNL_EVNT | Date Field: CAPTR_DT | Filter: ACTVY_TYP_CD = '031'",
+        _IMT_ORGANIC,
+        _imt_campaign("IRI"),
+    )
+)
+
+
+# ---------------------------------------------------------------------------
 # Workbook builder
 # ---------------------------------------------------------------------------
 def build_workbook(output_path):
@@ -362,6 +420,6 @@ def build_workbook(output_path):
 if __name__ == "__main__":
     OUTPUT = (
         "/mnt/c/Users/andre/New_projects/"
-        "NBA Souccess Library - Copy/metadata/vvd_success_queries.xlsx"
+        "NBA Souccess Library - Copy/metadata/success_queries.xlsx"
     )
     build_workbook(OUTPUT)
