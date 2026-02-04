@@ -723,6 +723,10 @@ select * from connection to teradata (
         ON C.CR_APP_ID          = D.CR_APP_ID
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    JOIN DG6V01.ARNGMNT_OWN_HIST        AS E
+        ON A.CLNT_NO = E.CLNT_NO
+        AND E.MIF_SRVC_ID IN (4)
+        AND E.MTH_END_DT = (SELECT MAX(MTH_END_DT) FROM DG6V01.ARNGMNT_OWN_HIST)
     WHERE D.APPL_FOR_PROD_TYP IN ('40','41','43')
       AND B.APP_TYP = 'P'
       AND D.PROD_APP_STS_CD IN (32,37,45,47,51,56,62)
@@ -757,6 +761,10 @@ select * from connection to teradata (
         ON C.CR_APP_ID          = D.CR_APP_ID
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    JOIN DG6V01.ARNGMNT_OWN_HIST        AS E
+        ON A.CLNT_NO = E.CLNT_NO
+        AND E.MIF_SRVC_ID IN (4)
+        AND E.MTH_END_DT = (SELECT MAX(MTH_END_DT) FROM DG6V01.ARNGMNT_OWN_HIST)
     WHERE D.APPL_FOR_PROD_TYP IN ('40','41','43')
       AND B.APP_TYP = 'P'
       AND D.PROD_APP_STS_CD IN (32,37,45,47,51,56,62)
@@ -799,6 +807,11 @@ select * from connection to teradata (
         ON C.CR_APP_ID          = D.CR_APP_ID
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    JOIN DG6V01.ARNGMNT_OWN_HIST        AS E
+        ON A.CLNT_NO = E.CLNT_NO
+        AND E.MIF_SRVC_ID IN (4)
+        AND E.MTH_END_DT = ADD_MONTHS(T.TREATMT_END_DT
+            - (EXTRACT(DAY FROM T.TREATMT_END_DT)) + 1, 1) - 1
     WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
       AND D.APPL_FOR_PROD_TYP IN ('40','41','43')
       AND B.APP_TYP = 'P'
@@ -837,6 +850,11 @@ select * from connection to teradata (
         ON C.CR_APP_ID          = D.CR_APP_ID
         AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
         AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    JOIN DG6V01.ARNGMNT_OWN_HIST        AS E
+        ON A.CLNT_NO = E.CLNT_NO
+        AND E.MIF_SRVC_ID IN (4)
+        AND E.MTH_END_DT = ADD_MONTHS(T.TREATMT_END_DT
+            - (EXTRACT(DAY FROM T.TREATMT_END_DT)) + 1, 1) - 1
     WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
       AND D.APPL_FOR_PROD_TYP IN ('40','41','43')
       AND B.APP_TYP = 'P'
@@ -888,6 +906,10 @@ select * from connection to teradata (
         AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
         AND OWN.AR_ID        = HIST.AR_ID
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    INNER JOIN DDWV01.AR_BAL_DLY        AS BAL
+        ON HIST.AR_ID = BAL.AR_ID
+        AND BAL.SNAP_DT = OWN.MTH_END_DT
+        AND BAL.SRVC_ID IN (11, 16, 37, 13, 14, 19)
     WHERE HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
       AND OWN.MTH_END_DT = (SELECT MAX(MTH_END_DT) FROM DG6V01.ARNGMNT_OWN_HIST)
@@ -914,6 +936,10 @@ select * from connection to teradata (
         AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
         AND OWN.AR_ID        = HIST.AR_ID
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    INNER JOIN DDWV01.AR_BAL_DLY        AS BAL
+        ON HIST.AR_ID = BAL.AR_ID
+        AND BAL.SNAP_DT = OWN.MTH_END_DT
+        AND BAL.SRVC_ID IN (11, 16, 37, 13, 14, 19)
     WHERE HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
       AND OWN.MTH_END_DT = (SELECT MAX(MTH_END_DT) FROM DG6V01.ARNGMNT_OWN_HIST)
@@ -952,6 +978,10 @@ select * from connection to teradata (
         AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
         AND OWN.AR_ID        = HIST.AR_ID
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    INNER JOIN DDWV01.AR_BAL_DLY        AS BAL
+        ON HIST.AR_ID = BAL.AR_ID
+        AND BAL.SNAP_DT = OWN.MTH_END_DT
+        AND BAL.SRVC_ID IN (11, 16, 37, 13, 14, 19)
     WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
       AND HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
@@ -984,6 +1014,10 @@ select * from connection to teradata (
         AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
         AND OWN.AR_ID        = HIST.AR_ID
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    INNER JOIN DDWV01.AR_BAL_DLY        AS BAL
+        ON HIST.AR_ID = BAL.AR_ID
+        AND BAL.SNAP_DT = OWN.MTH_END_DT
+        AND BAL.SRVC_ID IN (11, 16, 37, 13, 14, 19)
     WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
       AND HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
