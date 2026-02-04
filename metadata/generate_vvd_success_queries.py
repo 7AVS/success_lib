@@ -125,9 +125,9 @@ def _imt_mapping(mne):
 
 def card_acq_organic():
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -142,13 +142,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY ISS_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM ISS_DT)  AS yr,
@@ -164,16 +164,16 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
 def card_acq_campaign(mne):
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         A.CLNT_NO,
@@ -194,13 +194,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY A.ISS_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM A.ISS_DT)  AS yr,
@@ -220,8 +220,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -229,9 +229,9 @@ QUIT;"""
 
 def card_actv_organic():
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -247,13 +247,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY ACTV_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM ACTV_DT)  AS yr,
@@ -270,16 +270,16 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
 def card_actv_campaign(mne):
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         A.CLNT_NO,
@@ -301,13 +301,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY A.ACTV_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM A.ACTV_DT)  AS yr,
@@ -328,8 +328,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -337,9 +337,9 @@ QUIT;"""
 
 def card_usage_organic():
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -354,13 +354,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY ACTV_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM ACTV_DT)  AS yr,
@@ -376,16 +376,16 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
 def card_usage_campaign(mne):
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         A.CLNT_NO,
@@ -406,13 +406,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY A.ACTV_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM A.ACTV_DT)  AS yr,
@@ -432,8 +432,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -441,9 +441,9 @@ QUIT;"""
 
 def wallet_organic():
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CAST(SUBSTR(B.CLNT_CRD_NO, 7, 9) AS INTEGER)  AS CLNT_NO,
@@ -463,13 +463,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY B.TXN_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM B.TXN_DT)  AS yr,
@@ -491,16 +491,16 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
 def wallet_campaign(mne):
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CAST(SUBSTR(B.CLNT_CRD_NO, 7, 9) AS INTEGER)  AS CLNT_NO,
@@ -525,13 +525,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY B.TXN_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM B.TXN_DT)  AS yr,
@@ -557,8 +557,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -566,9 +566,9 @@ QUIT;"""
 
 def imt_organic():
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -582,13 +582,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY CAPTR_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM CAPTR_DT)  AS yr,
@@ -602,16 +602,16 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
 def imt_campaign(mne):
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         A.CLNT_NO,
@@ -631,13 +631,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY A.CAPTR_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM A.CAPTR_DT)  AS yr,
@@ -655,8 +655,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -678,9 +678,9 @@ def _o2p_mapping(mne):
 
 def o2p_organic():
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         A.CLNT_NO,
@@ -706,13 +706,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY D.PROD_APP_COMPL_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM D.PROD_APP_COMPL_DT)  AS yr,
@@ -739,16 +739,16 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
 def o2p_campaign(mne):
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         A.CLNT_NO,
@@ -780,13 +780,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY D.PROD_APP_COMPL_DT DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM D.PROD_APP_COMPL_DT)  AS yr,
@@ -817,8 +817,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -840,9 +840,9 @@ def _rat_mapping(mne):
 
 def rat_organic():
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         OWN.CLNT_NO,
@@ -862,13 +862,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY HIST.DT_OPENED DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM HIST.DT_OPENED)  AS yr,
@@ -887,16 +887,16 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
 def rat_campaign(mne):
     sample = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         T.CLNT_NO,
@@ -925,13 +925,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY HIST.DT_OPENED DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = f"""\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM HIST.DT_OPENED)  AS yr,
@@ -957,8 +957,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -979,9 +979,9 @@ def _ide_mapping(mne):
 
 def ide_organic():
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -995,13 +995,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
@@ -1014,15 +1014,15 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 def ide_campaign(mne):
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -1038,13 +1038,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
@@ -1058,8 +1058,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -1080,9 +1080,9 @@ def _gis_mapping(mne):
 
 def gis_organic():
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -1094,13 +1094,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY dt_open DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM dt_open)  AS yr,
@@ -1113,15 +1113,15 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 def gis_campaign(mne):
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -1135,13 +1135,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY dt_open DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM dt_open)  AS yr,
@@ -1155,8 +1155,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 
@@ -1177,9 +1177,9 @@ def _tao_mapping(mne):
 
 def tao_organic():
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -1191,13 +1191,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY dt_open DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM dt_open)  AS yr,
@@ -1210,15 +1210,15 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 def tao_campaign(mne):
     sample = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
@@ -1232,13 +1232,13 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY dt_open DESC
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
 
     summary = """\
-PROC SQL;
-CONNECT TO TERADATA AS EDW (MODE=TERADATA);
-SELECT * FROM CONNECTION TO EDW (
+proc sql;
+%connectsql
+select * from connection to teradata (
 
     SELECT
         EXTRACT(YEAR FROM dt_open)  AS yr,
@@ -1252,8 +1252,8 @@ SELECT * FROM CONNECTION TO EDW (
     ORDER BY 1, 2
 
 );
-DISCONNECT FROM EDW;
-QUIT;"""
+disconnect from teradata;
+quit;"""
     return sample, summary
 
 

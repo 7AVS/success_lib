@@ -32,7 +32,7 @@ The VVD vintage engine implements the SuperFact four-layer architecture in code:
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │  LAYER 1: EXPERIMENT METADATA                                       │
-│  Source: DTZTA_T_TACTIC_EVNT_HIST (HIVE)                           │
+│  Source: DG6V01.TACTIC_EVNT_IP_AR_HIST (EDW)                       │
 │  Question: "Who is in the test?"                                    │
 │  Output: Client-level experiment assignments with group & cohort    │
 ├─────────────────────────────────────────────────────────────────────┤
@@ -94,16 +94,16 @@ Shows which metrics are shared across campaigns:
 
 ## 3. Source Data Assets
 
-### 3.1 HIVE Sources (Parquet on HDFS)
+### 3.1 Experiment Sources
 
-#### DTZTA_T_TACTIC_EVNT_HIST — Experiment Population
+#### DG6V01.TACTIC_EVNT_IP_AR_HIST — Experiment Population
 
 | Attribute | Value |
 |-----------|-------|
 | **Purpose** | Identifies which clients are in each experiment |
 | **Layer** | 1 (Experiment Metadata) |
-| **Path** | `/prod/sz/tsz/00150/cc/DTZTA_T_TACTIC_EVNT_HIST/` |
-| **Partition** | `EVNT_STRT_DT=YYYY*` |
+| **Source System** | EDW (Teradata) |
+| **Schema** | DG6V01 |
 | **Grain** | One row per client per tactic event |
 
 | Column | Type | Description | Used As |
@@ -129,50 +129,25 @@ Shows which metrics are shared across campaigns:
 
 ---
 
-#### DDWTA_VISA_DR_CRD — Visa Debit Card Data
+#### DDWV01.VISA_DR_CRD_DLY — Visa Debit Card Data
 
 | Attribute | Value |
 |-----------|-------|
-| **Purpose** | Card issuance and activation events |
+| **Purpose** | Card issuance, activation, and usage events |
 | **Layer** | 3 (Success Definitions) |
-| **Path** | `/prod/sz/tsz/00050/data/DDWTA_VISA_DR_CRD/PartitionColumn=Latest/CAPTR_DT=` |
-| **Partition** | `CAPTR_DT=YYYY*` |
-| **Grain** | One row per card |
-| **Used by** | VVD_ACQ_001 (card_acquisition), VVD_ACT_001 (card_activation) |
+| **Source System** | EDW (Teradata) |
+| **Schema** | DDWV01 |
+| **Grain** | One row per card per snapshot |
+| **Metric ID** | VVD_ACQ_001 (Card Acquisition), VVD_ACT_001 (Card Activation), VVD_USG_001 (Card Usage) |
 
 | Column | Type | Description | Used As |
 |--------|------|-------------|---------|
 | `CLNT_NO` | string | Client number | Join key |
-| `ISS_DT` | date | Card issue date | SUCCESS_DT for acquisition |
-| `ACTV_DT` | date | Card activation date | SUCCESS_DT for activation |
+| `ISS_DT` | date | Card issue date | SUCCESS_DT for VVD_ACQ_001 |
+| `ACTV_DT` | date | Card activation date | SUCCESS_DT for VVD_ACT_001 |
 | `STS_CD` | string | Card status code | Filter: '06' (Active), '08' (Approved) |
 | `SRVC_ID` | int | Service identifier | Filter: 36 (Visa Direct / VVD) |
-| `CAPTR_DT` | date | Capture date | Partition key |
-
----
-
-#### DDWTA_T_PT_OF_SALE_TXN — Point of Sale Transactions
-
-| Attribute | Value |
-|-----------|-------|
-| **Purpose** | Card usage / transaction events |
-| **Layer** | 3 (Success Definitions) |
-| **Path** | `/prod/sz/tsz/00050/data/DDWTA_T_PT_OF_SALE_TXN/SNAP_DT=` |
-| **Partition** | `SNAP_DT=YYYY*` |
-| **Grain** | One row per transaction |
-| **Used by** | VVD_USG_001 (card_usage) |
-
-| Column | Type | Description | Used As |
-|--------|------|-------------|---------|
-| `CLNT_CRD_NO` | string | Client card number (contains CLNT_NO at pos 7-15) | Derives `CLNT_NO` |
-| `TXN_DT` | date | Transaction date | SUCCESS_DT |
-| `TXN_TP` | int | Transaction type | Filter: 10, 13, 12 |
-| `MSG_TP` | string | Message type | Filter: '0210', '0220' |
-| `AMT1` | decimal | Transaction amount | Filter: > 0 |
-| `SRVC_CD` | int | Service code | Filter: 36 (Visa Direct) |
-| `SNAP_DT` | date | Snapshot date | Partition key |
-
-**Client extraction:** `CLNT_NO = CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)` with leading zeros stripped.
+| `SNAP_DT` | date | Snapshot date | Filter: MAX(SNAP_DT) within 7 days |
 
 ---
 
@@ -184,9 +159,10 @@ Shows which metrics are shared across campaigns:
 |-----------|-------|
 | **Purpose** | Wallet provisioning events (zero-amount token transactions) |
 | **Layer** | 3 (Success Definitions) |
+| **Source System** | EDW (Teradata) |
 | **Schema** | DDWV05 |
 | **Grain** | One row per POS transaction |
-| **Used by** | VVD_PRV_001 (wallet_provisioning) |
+| **Metric ID** | VVD_PRV_001 (Wallet Provisioning) |
 
 | Column | Type | Description | Used As |
 |--------|------|-------------|---------|
@@ -206,9 +182,10 @@ Shows which metrics are shared across campaigns:
 |-----------|-------|
 | **Purpose** | Token/wallet provisioning registry |
 | **Layer** | 3 (Success Definitions) |
+| **Source System** | EDW (Teradata) |
 | **Schema** | DL_DECMAN |
 | **Grain** | One row per token |
-| **Used by** | VVD_PRV_001 (wallet_provisioning) — joined to CLNT_CRD_POS_LOG |
+| **Metric ID** | VVD_PRV_001 (Wallet Provisioning) — joined to CLNT_CRD_POS_LOG |
 
 | Column | Type | Description | Used As |
 |--------|------|-------------|---------|
@@ -223,9 +200,10 @@ Shows which metrics are shared across campaigns:
 |-----------|-------|
 | **Purpose** | Email engagement tracking (sent, opened, clicked, unsubscribed) |
 | **Layer** | 4 (Client Journey) |
+| **Source System** | EDW (Teradata) |
 | **Schema** | DTZV01 |
 | **Grain** | One row per client per disposition event |
-| **Used by** | Engagement curves in vintage engine |
+| **Metric ID** | N/A — engagement layer, not a success metric |
 
 | Column | Type | Description | Used As |
 |--------|------|-------------|---------|
@@ -258,7 +236,7 @@ Each metric follows a standard contract: given a date range, return `CLNT_NO` + 
 | **Pillar** | Conversion |
 | **Business Definition** | Client acquired a new VVD card (issued in active/approved status) |
 | **Success Date** | `ISS_DT` (card issue date) |
-| **Source** | HIVE — `DDWTA_VISA_DR_CRD` |
+| **Source** | EDW — `DDWV01.VISA_DR_CRD_DLY` |
 | **Grain** | Client (first issue date per client) |
 | **Campaigns** | VCN (primary), VDA (primary) |
 
@@ -283,7 +261,7 @@ Each metric follows a standard contract: given a date range, return `CLNT_NO` + 
 | **Pillar** | Conversion |
 | **Business Definition** | Client activated their VVD card (first use after issuance) |
 | **Success Date** | `ACTV_DT` (card activation date) |
-| **Source** | HIVE — `DDWTA_VISA_DR_CRD` |
+| **Source** | EDW — `DDWV01.VISA_DR_CRD_DLY` |
 | **Grain** | Client (first activation date per client) |
 | **Campaigns** | VDT (primary) |
 
@@ -310,7 +288,7 @@ Each metric follows a standard contract: given a date range, return `CLNT_NO` + 
 | **Pillar** | Engagement |
 | **Business Definition** | Client used their VVD card for a point-of-sale transaction |
 | **Success Date** | `TXN_DT` (transaction date) |
-| **Source** | HIVE — `DDWTA_T_PT_OF_SALE_TXN` |
+| **Source** | EDW — `DDWV01.VISA_DR_CRD_DLY` |
 | **Grain** | Client (first transaction date per client) |
 | **Campaigns** | VUI (primary), VUT (secondary), VAW (secondary) |
 
@@ -365,7 +343,7 @@ Each metric follows a standard contract: given a date range, return `CLNT_NO` + 
 
 **Client extraction:** `CLNT_NO = CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)`
 
-**Why EDW instead of HIVE:** Token registry (`DL_DECMAN.TOKEN_LIST`) is only available in EDW. The join between POS log and token list is necessary to confirm wallet provisioning via `TOKEN_WALLET_IND`.
+**Join note:** Token registry (`DL_DECMAN.TOKEN_LIST`) is joined to confirm wallet provisioning via `TOKEN_WALLET_IND`.
 
 **Output contract:** `CLNT_NO (string), SUCCESS_DT (date)`
 
@@ -497,11 +475,11 @@ Intermediate dataset created during processing. One row per client per metric.
                                         │ selects metric
                                         ▼
 ┌──────────────────────┐     ┌──────────────────────────────────────┐
-│  TACTIC_EVNT_HIST    │     │  SUCCESS_DEFINITIONS (Layer 3)       │
-│  (Layer 1 - HIVE)    │     │                                      │
-│                      │     │  VVD_ACQ_001 ← DDWTA_VISA_DR_CRD    │
-│  CLNT_NO             │     │  VVD_ACT_001 ← DDWTA_VISA_DR_CRD    │
-│  TACTIC_ID           │     │  VVD_USG_001 ← DDWTA_T_PT_OF_SALE   │
+│  TACTIC_EVNT_IP_AR   │     │  SUCCESS_DEFINITIONS (Layer 3)       │
+│  _HIST (Layer 1-EDW) │     │                                      │
+│                      │     │  VVD_ACQ_001 ← VISA_DR_CRD_DLY      │
+│  CLNT_NO             │     │  VVD_ACT_001 ← VISA_DR_CRD_DLY      │
+│  TACTIC_ID           │     │  VVD_USG_001 ← VISA_DR_CRD_DLY      │
 │  TREATMT_STRT_DT     │     │  VVD_PRV_001 ← CLNT_CRD_POS_LOG     │
 │  TREATMT_END_DT      │     │                + TOKEN_LIST           │
 │  TST_GRP_CD          │     │                                      │
@@ -551,7 +529,7 @@ Intermediate dataset created during processing. One row per client per metric.
 
 | Constant | Value | Description |
 |----------|-------|-------------|
-| `YEARS_TO_INCLUDE` | [2025, 2026] | Data years loaded from HIVE partitions |
+| `YEARS_TO_INCLUDE` | [2025, 2026] | Data years included in queries |
 | `AGGREGATION_LEVEL` | MONTH | Cohorts are monthly (yyyy-MM) |
 | `TEST_GROUP_CODE` | TG4 | TG4 = test/action group; all others = control |
 | `VVD_SERVICE_CODE` | 36 | Visa Direct / VVD product identifier |
@@ -577,10 +555,9 @@ DAYS_TO_FIRST_SUCCESS = datediff(FIRST_SUCCESS_DT, TREATMT_STRT_DT)
 
 | Source Table | Extraction Method |
 |-------------|-------------------|
-| TACTIC_EVNT_HIST | `regexp_replace(trim(TACTIC_EVNT_ID), '^0+', '')` |
-| DDWTA_VISA_DR_CRD | Direct `CLNT_NO` column |
-| DDWTA_T_PT_OF_SALE_TXN | `regexp_replace(SUBSTR(CLNT_CRD_NO, 7, 9), '^0+', '')` |
-| CLNT_CRD_POS_LOG | `CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)` |
+| DG6V01.TACTIC_EVNT_IP_AR_HIST | `regexp_replace(trim(TACTIC_EVNT_ID), '^0+', '')` |
+| DDWV01.VISA_DR_CRD_DLY | Direct `CLNT_NO` column |
+| DDWV05.CLNT_CRD_POS_LOG | `CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)` |
 
 ### 8.4 Engagement Denominator Rules
 
