@@ -1,31 +1,44 @@
 #!/usr/bin/env python3
 """
 Generate success_queries.xlsx - one tab per campaign mnemonic.
-Each tab contains two sections:
-  TOP:    Organic Success  (all events, no campaign filter)
-  BOTTOM: Campaign Success (events joined to tactic population within treatment window)
+Each tab follows the source_to_target_mapping template:
+  TOP:    Source-to-target mapping table (Target Column | source table | source column/logic)
+  MIDDLE: Organic Success query  (all events, no campaign filter)
+  BOTTOM: Campaign Success query (events joined to tactic population within treatment window)
 
 All queries use EDW (Teradata) SQL syntax with PROC SQL / CONNECTION TO TERADATA pattern.
 """
 
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Style constants
 # ---------------------------------------------------------------------------
-TITLE_FONT      = Font(name="Calibri", bold=True, size=14)
-HEADER_FONT     = Font(name="Calibri", bold=True, size=12)
-META_FONT       = Font(name="Calibri", size=11)
-SQL_FONT        = Font(name="Consolas", size=10)
+TITLE_FONT       = Font(name="Calibri", bold=True, size=14)
+HEADER_FONT      = Font(name="Calibri", bold=True, size=12)
+META_FONT        = Font(name="Calibri", size=11)
+SQL_FONT         = Font(name="Consolas", size=10)
+LABEL_FONT       = Font(name="Calibri", bold=True, size=11)
 
-GREEN_FILL      = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
-BLUE_FILL       = PatternFill(start_color="BDD7EE", end_color="BDD7EE", fill_type="solid")
+# Mapping table styles
+MAP_HDR_FONT     = Font(name="Calibri", bold=True, size=11)
+MAP_DATA_FONT    = Font(name="Calibri", size=11)
+MAP_HDR_FILL     = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")  # green header
 
-WRAP_ALIGN      = Alignment(wrap_text=False, vertical="top")
+GREEN_FILL       = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+BLUE_FILL        = PatternFill(start_color="BDD7EE", end_color="BDD7EE", fill_type="solid")
 
-COL_A_WIDTH     = 120  # characters
+WRAP_ALIGN       = Alignment(wrap_text=False, vertical="top")
+THIN_BORDER      = Border(
+    left=Side(style="thin"), right=Side(style="thin"),
+    top=Side(style="thin"), bottom=Side(style="thin"),
+)
+
+COL_A_WIDTH      = 30
+COL_B_WIDTH      = 45
+COL_C_WIDTH      = 50
 
 # ---------------------------------------------------------------------------
 # Snap-date subquery (reused everywhere except POS/Wallet tabs)
@@ -34,6 +47,77 @@ SNAP_SUBQUERY = (
     "(SELECT MAX(SNAP_DT) FROM DDWV01.VISA_DR_CRD_DLY "
     "WHERE SNAP_DT >= CURRENT_DATE - 7)"
 )
+
+# ---------------------------------------------------------------------------
+# Source-to-target mapping rows per metric type
+# Each entry is a list of (target_column, source_table, source_column_logic)
+# ---------------------------------------------------------------------------
+
+def _card_acq_mapping(mnemonic):
+    return [
+        ("clnt_no",            "DDWV01.VISA_DR_CRD_DLY",  "CLNT_NO"),
+        ("acct_no",            "DDWV01.VISA_DR_CRD_DLY",  ""),
+        ("amount",             "",                          ""),
+        ("event_mnemonic_cd",  "",                          mnemonic),
+        ("event_type_cd",      "",                          ""),
+        ("event_attributes",   "DDWV01.VISA_DR_CRD_DLY",  "JSON(STS_CD, SRVC_ID)"),
+        ("event_dt",           "DDWV01.VISA_DR_CRD_DLY",  "ISS_DT"),
+        ("snap_dt",            "",                          "<GENERATED>"),
+        ("job_id",             "",                          "<GENERATED>"),
+    ]
+
+def _card_actv_mapping(mnemonic):
+    return [
+        ("clnt_no",            "DDWV01.VISA_DR_CRD_DLY",  "CLNT_NO"),
+        ("acct_no",            "DDWV01.VISA_DR_CRD_DLY",  ""),
+        ("amount",             "",                          ""),
+        ("event_mnemonic_cd",  "",                          mnemonic),
+        ("event_type_cd",      "",                          ""),
+        ("event_attributes",   "DDWV01.VISA_DR_CRD_DLY",  "JSON(STS_CD, SRVC_ID)"),
+        ("event_dt",           "DDWV01.VISA_DR_CRD_DLY",  "ACTV_DT"),
+        ("snap_dt",            "",                          "<GENERATED>"),
+        ("job_id",             "",                          "<GENERATED>"),
+    ]
+
+def _card_usage_mapping(mnemonic):
+    return [
+        ("clnt_no",            "DDWV01.VISA_DR_CRD_DLY",  "CLNT_NO"),
+        ("acct_no",            "DDWV01.VISA_DR_CRD_DLY",  ""),
+        ("amount",             "",                          ""),
+        ("event_mnemonic_cd",  "",                          mnemonic),
+        ("event_type_cd",      "",                          ""),
+        ("event_attributes",   "DDWV01.VISA_DR_CRD_DLY",  "JSON(STS_CD, SRVC_ID)"),
+        ("event_dt",           "DDWV01.VISA_DR_CRD_DLY",  "ACTV_DT"),
+        ("snap_dt",            "",                          "<GENERATED>"),
+        ("job_id",             "",                          "<GENERATED>"),
+    ]
+
+def _wallet_mapping(mnemonic):
+    return [
+        ("clnt_no",            "DDWV05.CLNT_CRD_POS_LOG",  "CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)"),
+        ("acct_no",            "DDWV05.CLNT_CRD_POS_LOG",  "CLNT_CRD_NO"),
+        ("amount",             "",                           ""),
+        ("event_mnemonic_cd",  "",                           mnemonic),
+        ("event_type_cd",      "",                           ""),
+        ("event_attributes",   "DDWV05.CLNT_CRD_POS_LOG + DL_DECMAN.TOKEN_LIST",
+                                                             "JSON(TOKN_REQSTR_ID, TOKEN_WALLET_IND)"),
+        ("event_dt",           "DDWV05.CLNT_CRD_POS_LOG",  "TXN_DT"),
+        ("snap_dt",            "",                           "<GENERATED>"),
+        ("job_id",             "",                           "<GENERATED>"),
+    ]
+
+def _imt_mapping(mnemonic):
+    return [
+        ("clnt_no",            "DDWV01.EXT_CDS_CHNL_EVNT",  "CLNT_NO"),
+        ("acct_no",            "DDWV01.EXT_CDS_CHNL_EVNT",  "AR_ID"),
+        ("amount",             "DDWV01.EXT_CDS_CHNL_EVNT",  "EVNT_AMT_CAD"),
+        ("event_mnemonic_cd",  "",                            mnemonic),
+        ("event_type_cd",      "",                            ""),
+        ("event_attributes",   "DDWV01.EXT_CDS_CHNL_EVNT",  "JSON(CHNL_TYP_CD, EVNT_CRNCY_CD, ACTVY_TYP_CD)"),
+        ("event_dt",           "DDWV01.EXT_CDS_CHNL_EVNT",  "CAPTR_DT"),
+        ("snap_dt",            "",                            "<GENERATED>"),
+        ("job_id",             "",                            "<GENERATED>"),
+    ]
 
 # ---------------------------------------------------------------------------
 # Query definitions
@@ -243,60 +327,7 @@ DISCONNECT FROM EDW;
 QUIT;"""
 
 
-# ---------------------------------------------------------------------------
-# Tab configuration
-# (mnemonic, title_suffix, metric_line, organic_sql, campaign_sql)
-# ---------------------------------------------------------------------------
-TABS = [
-    (
-        "VCN",
-        "Card Acquisition Success",
-        "Metric: Card Acquisition | Source: DDWV01.VISA_DR_CRD_DLY | Date Field: ISS_DT",
-        _CARD_ACQ_ORGANIC,
-        _card_acq_campaign("VCN"),
-    ),
-    (
-        "VDA",
-        "Card Acquisition Success",
-        "Metric: Card Acquisition | Source: DDWV01.VISA_DR_CRD_DLY | Date Field: ISS_DT",
-        _CARD_ACQ_ORGANIC,
-        _card_acq_campaign("VDA"),
-    ),
-    (
-        "VDT",
-        "Card Activation Success",
-        "Metric: Card Activation | Source: DDWV01.VISA_DR_CRD_DLY | Date Field: ACTV_DT",
-        _CARD_ACTV_ORGANIC,
-        _CARD_ACTV_CAMPAIGN,
-    ),
-    (
-        "VUI",
-        "Card Usage Success",
-        "Metric: Card Usage | Source: DDWV01.VISA_DR_CRD_DLY | Date Field: ACTV_DT",
-        _CARD_USAGE_ORGANIC,
-        _CARD_USAGE_CAMPAIGN,
-    ),
-    (
-        "VUT",
-        "Wallet Provisioning Success",
-        "Metric: Wallet Provisioning | Source: DDWV05.CLNT_CRD_POS_LOG + DL_DECMAN.TOKEN_LIST | Date Field: TXN_DT",
-        _WALLET_ORGANIC,
-        _wallet_campaign("VUT"),
-    ),
-    (
-        "VAW",
-        "Wallet Provisioning Success",
-        "Metric: Wallet Provisioning | Source: DDWV05.CLNT_CRD_POS_LOG + DL_DECMAN.TOKEN_LIST | Date Field: TXN_DT",
-        _WALLET_ORGANIC,
-        _wallet_campaign("VAW"),
-    ),
-]
-
-
-# ---------------------------------------------------------------------------
-# IRI  (International Money Transfer - any IMT transaction = success)
-# Source: DDWV01.EXT_CDS_CHNL_EVNT  |  ACTVY_TYP_CD = '031'
-# ---------------------------------------------------------------------------
+# ---- IRI  (International Money Transfer - any IMT transaction = success) ----
 _IMT_ORGANIC = """\
 PROC SQL;
 CONNECT TO TERADATA AS EDW (MODE=TERADATA);
@@ -339,16 +370,61 @@ DISCONNECT FROM EDW;
 QUIT;"""
 
 
-# IRI tab added to the TABS list
-TABS.append(
+# ---------------------------------------------------------------------------
+# Tab configuration
+# (mnemonic, title_suffix, mapping_rows, organic_sql, campaign_sql)
+# ---------------------------------------------------------------------------
+TABS = [
+    (
+        "VCN",
+        "Card Acquisition Success",
+        _card_acq_mapping("VCN"),
+        _CARD_ACQ_ORGANIC,
+        _card_acq_campaign("VCN"),
+    ),
+    (
+        "VDA",
+        "Card Acquisition Success",
+        _card_acq_mapping("VDA"),
+        _CARD_ACQ_ORGANIC,
+        _card_acq_campaign("VDA"),
+    ),
+    (
+        "VDT",
+        "Card Activation Success",
+        _card_actv_mapping("VDT"),
+        _CARD_ACTV_ORGANIC,
+        _CARD_ACTV_CAMPAIGN,
+    ),
+    (
+        "VUI",
+        "Card Usage Success",
+        _card_usage_mapping("VUI"),
+        _CARD_USAGE_ORGANIC,
+        _CARD_USAGE_CAMPAIGN,
+    ),
+    (
+        "VUT",
+        "Wallet Provisioning Success",
+        _wallet_mapping("VUT"),
+        _WALLET_ORGANIC,
+        _wallet_campaign("VUT"),
+    ),
+    (
+        "VAW",
+        "Wallet Provisioning Success",
+        _wallet_mapping("VAW"),
+        _WALLET_ORGANIC,
+        _wallet_campaign("VAW"),
+    ),
     (
         "IRI",
         "International Money Transfer Success",
-        "Metric: IMT Transaction | Source: DDWV01.EXT_CDS_CHNL_EVNT | Date Field: CAPTR_DT | Filter: ACTVY_TYP_CD = '031'",
+        _imt_mapping("IRI"),
         _IMT_ORGANIC,
         _imt_campaign("IRI"),
-    )
-)
+    ),
+]
 
 
 # ---------------------------------------------------------------------------
@@ -359,26 +435,47 @@ def build_workbook(output_path):
     # Remove the default sheet created by openpyxl
     wb.remove(wb.active)
 
-    for mnemonic, title_suffix, meta_line, organic_sql, campaign_sql in TABS:
-        ws = wb.create_sheet(title=mnemonic)
+    for mnemonic, title_suffix, mapping_rows, organic_sql, campaign_sql in TABS:
+        ws = wb.create_sheet(title=f"{mnemonic}_Success")
 
-        # Column A width
+        # Column widths
         ws.column_dimensions["A"].width = COL_A_WIDTH
+        ws.column_dimensions["B"].width = COL_B_WIDTH
+        ws.column_dimensions["C"].width = COL_C_WIDTH
 
         row = 1
 
-        # --- Row 1: Title ---------------------------------------------------
-        ws.cell(row=row, column=1, value=f"{mnemonic} - {title_suffix}").font = TITLE_FONT
+        # =================================================================
+        # Source-to-target mapping table (matching template format)
+        # =================================================================
+
+        # Header row (green fill)
+        for col, header in enumerate(["Target Column", "source table", "source column/logic"], 1):
+            cell = ws.cell(row=row, column=col, value=header)
+            cell.font = MAP_HDR_FONT
+            cell.fill = MAP_HDR_FILL
+            cell.border = THIN_BORDER
         row += 1
 
-        # --- Row 2: Metric metadata -----------------------------------------
-        ws.cell(row=row, column=1, value=meta_line).font = META_FONT
+        # Data rows
+        for target_col, src_table, src_logic in mapping_rows:
+            ws.cell(row=row, column=1, value=target_col).font = MAP_DATA_FONT
+            ws.cell(row=row, column=2, value=src_table).font = MAP_DATA_FONT
+            ws.cell(row=row, column=3, value=src_logic).font = MAP_DATA_FONT
+            for col in range(1, 4):
+                ws.cell(row=row, column=col).border = THIN_BORDER
+            row += 1
+
+        # Blank rows
+        row += 2
+
+        # =================================================================
+        # Query: label
+        # =================================================================
+        ws.cell(row=row, column=1, value="Query:").font = LABEL_FONT
         row += 1
 
-        # --- Row 3: blank ---------------------------------------------------
-        row += 1
-
-        # --- Row 4: Organic header ------------------------------------------
+        # --- Organic header (green) ----------------------------------------
         cell = ws.cell(row=row, column=1, value="ORGANIC SUCCESS (All Events)")
         cell.font = HEADER_FONT
         cell.fill = GREEN_FILL
@@ -392,9 +489,9 @@ def build_workbook(output_path):
             row += 1
 
         # --- Blank separator ------------------------------------------------
-        row += 1
+        row += 2
 
-        # --- Campaign header ------------------------------------------------
+        # --- Campaign header (blue) -----------------------------------------
         cell = ws.cell(row=row, column=1, value="CAMPAIGN SUCCESS (Tactic-Linked)")
         cell.font = HEADER_FONT
         cell.fill = BLUE_FILL
