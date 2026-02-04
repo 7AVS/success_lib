@@ -39,6 +39,77 @@ You need a PowerShell terminal to run the scripts.
 
 ---
 
+## Quick Search — Single Mnemonic Lookup
+
+If you need to look up one mnemonic (or a small handful), use `quick_search.ps1`. It does everything in one script — scan, tag, and extract — with no CSVs or pipeline steps.
+
+**Script:** `sas_search/scripts/quick_search.ps1`
+
+### How to Use
+
+1. Open the script in VS Code
+2. Edit the three sections at the top:
+
+```
+# Your mnemonics (one or many)
+$mnemonics = @("FTH", "MOM")
+
+# Your keywords (searched IN ADDITION to "success" which is always included)
+$keywords = @("mortgage", "open", "funded", "approved", "maturity", "retain")
+
+# Paths
+$searchPath = "\\maple.fg.rbc.com\data\Toronto\wrkgrp\..."
+$outFile    = "\\maple.fg.rbc.com\data\...\quick_search_output.txt"
+```
+
+3. Save (**Ctrl+S**)
+4. Run in terminal:
+   ```
+   .\sas_search\scripts\quick_search.ps1
+   ```
+
+### What It Does
+
+| Step | Action |
+|------|--------|
+| 1/3 Scan | Finds all `.sas` files on the network that contain your mnemonics |
+| 2/3 Tag | For each file, records which of your mnemonics it actually contains |
+| 3/3 Extract | Pulls code blocks (20 lines above / 20 lines below) around every line that contains "success" or any of your keywords |
+
+### Output
+
+A single text file with code blocks grouped by mnemonic. Each block is annotated with line markers:
+
+| Marker | Meaning |
+|--------|---------|
+| `>>>` | Line where "success" was found |
+| `>>>[keyword]` | Line where one of your keywords was found (keyword name shown) |
+| `?` | Line with conditional logic (if/where/case/when) |
+| (blank) | Context line |
+
+### Settings
+
+These can be adjusted but usually don't need to be:
+
+| Setting | Default | What it controls |
+|---------|---------|-----------------|
+| `$contextAbove` | 20 | Lines to show above each keyword match |
+| `$contextBelow` | 20 | Lines to show below each keyword match |
+| `$maxBlocks` | 10 | Max code blocks per mnemonic-file pair |
+
+### When to Use Quick Search vs the Pipeline
+
+| Scenario | Use |
+|----------|-----|
+| Looking up 1-3 mnemonics, want fast results | **Quick Search** |
+| Running a batch of many mnemonics | **Pipeline** (step 1 - 4a) |
+| Need to submit results to Helios Assist for AI extraction | **Pipeline** (structured output with headers) |
+| Need a summary dashboard of all mnemonics | **Pipeline** (step 5) |
+
+Quick Search is ideal for ad-hoc investigation — when you need to quickly see what SAS code exists for a specific campaign before deciding next steps.
+
+---
+
 ## The Pipeline
 
 The default pipeline is:
@@ -327,6 +398,7 @@ The scripts read the mnemonic list from this file — no code changes needed.
 |------|----------|-----------|
 | `keyword_mapping.csv` | `sas_search/` | Master list of all campaigns — source of truth |
 | `keyword_mapping_final.csv` | `sas_search/` | Campaigns grouped by product (reference only) |
+| `quick_search.ps1` | `sas_search/scripts/` | All-in-one single mnemonic lookup (scan + tag + extract) |
 | `step1_scan.ps1` | `sas_search/scripts/` | Broad scan script |
 | `step2_tag.ps1` | `sas_search/scripts/` | Tagging script (+ missing mnemonics report) |
 | `step4a_extract_success.ps1` | `sas_search/scripts/` | Extract around "success" keyword (default) |
