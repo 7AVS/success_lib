@@ -1,0 +1,665 @@
+================================================================================
+  ORGANIC VALIDATION QUERIES — Success Library
+  Generated 2026-02-04  |  Date filter: >= 2025-01-01
+================================================================================
+
+
+********************************************************************************
+  VCN — Card Acquisition
+********************************************************************************
+
+/* ---- VCN: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CLNT_NO,
+        ISS_DT        AS SUCCESS_DT,
+        STS_CD,
+        SRVC_ID
+    FROM DDWV01.VISA_DR_CRD_DLY
+    WHERE STS_CD IN ('06','08')
+      AND SRVC_ID = 36
+      AND ISS_DT IS NOT NULL
+      AND SNAP_DT = (SELECT MAX(SNAP_DT) FROM DDWV01.VISA_DR_CRD_DLY WHERE SNAP_DT >= CURRENT_DATE - 7)
+      AND ISS_DT >= DATE '2025-01-01'
+    ORDER BY ISS_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- VCN: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM ISS_DT)  AS yr,
+        EXTRACT(MONTH FROM ISS_DT) AS mo,
+        COUNT(DISTINCT CLNT_NO)    AS unique_clients,
+        COUNT(*)                   AS total_events
+    FROM DDWV01.VISA_DR_CRD_DLY
+    WHERE STS_CD IN ('06','08')
+      AND SRVC_ID = 36
+      AND ISS_DT IS NOT NULL
+      AND SNAP_DT = (SELECT MAX(SNAP_DT) FROM DDWV01.VISA_DR_CRD_DLY WHERE SNAP_DT >= CURRENT_DATE - 7)
+      AND ISS_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  VDA — Card Acquisition
+********************************************************************************
+
+/* ---- VDA: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CLNT_NO,
+        ISS_DT        AS SUCCESS_DT,
+        STS_CD,
+        SRVC_ID
+    FROM DDWV01.VISA_DR_CRD_DLY
+    WHERE STS_CD IN ('06','08')
+      AND SRVC_ID = 36
+      AND ISS_DT IS NOT NULL
+      AND SNAP_DT = (SELECT MAX(SNAP_DT) FROM DDWV01.VISA_DR_CRD_DLY WHERE SNAP_DT >= CURRENT_DATE - 7)
+      AND ISS_DT >= DATE '2025-01-01'
+    ORDER BY ISS_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- VDA: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM ISS_DT)  AS yr,
+        EXTRACT(MONTH FROM ISS_DT) AS mo,
+        COUNT(DISTINCT CLNT_NO)    AS unique_clients,
+        COUNT(*)                   AS total_events
+    FROM DDWV01.VISA_DR_CRD_DLY
+    WHERE STS_CD IN ('06','08')
+      AND SRVC_ID = 36
+      AND ISS_DT IS NOT NULL
+      AND SNAP_DT = (SELECT MAX(SNAP_DT) FROM DDWV01.VISA_DR_CRD_DLY WHERE SNAP_DT >= CURRENT_DATE - 7)
+      AND ISS_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  VDT — Card Activation
+********************************************************************************
+
+/* ---- VDT: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CLNT_NO,
+        ACTV_DT       AS SUCCESS_DT,
+        STS_CD,
+        SRVC_ID
+    FROM DDWV01.VISA_DR_CRD_DLY
+    WHERE STS_CD IN ('06','08')
+      AND SRVC_ID = 36
+      AND ISS_DT IS NOT NULL
+      AND ACTV_DT IS NOT NULL
+      AND SNAP_DT = (SELECT MAX(SNAP_DT) FROM DDWV01.VISA_DR_CRD_DLY WHERE SNAP_DT >= CURRENT_DATE - 7)
+      AND ACTV_DT >= DATE '2025-01-01'
+    ORDER BY ACTV_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- VDT: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM ACTV_DT)  AS yr,
+        EXTRACT(MONTH FROM ACTV_DT) AS mo,
+        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
+        COUNT(*)                    AS total_events
+    FROM DDWV01.VISA_DR_CRD_DLY
+    WHERE STS_CD IN ('06','08')
+      AND SRVC_ID = 36
+      AND ISS_DT IS NOT NULL
+      AND ACTV_DT IS NOT NULL
+      AND SNAP_DT = (SELECT MAX(SNAP_DT) FROM DDWV01.VISA_DR_CRD_DLY WHERE SNAP_DT >= CURRENT_DATE - 7)
+      AND ACTV_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  VUI — Card Usage
+********************************************************************************
+
+/* ---- VUI: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)  AS CLNT_NO,
+        TXN_DT            AS SUCCESS_DT,
+        AMT1,
+        TXN_TP,
+        MSG_TP,
+        SRVC_CD
+    FROM DDWV05.CLNT_CRD_POS_LOG
+    WHERE AMT1 > 0
+      AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
+      AND SRVC_CD = 36
+      AND TXN_DT >= DATE '2025-01-01'
+    ORDER BY TXN_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- VUI: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM TXN_DT)  AS yr,
+        EXTRACT(MONTH FROM TXN_DT) AS mo,
+        COUNT(DISTINCT CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER))
+                                    AS unique_clients,
+        COUNT(*)                    AS total_events,
+        SUM(AMT1)                   AS total_amount
+    FROM DDWV05.CLNT_CRD_POS_LOG
+    WHERE AMT1 > 0
+      AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
+      AND SRVC_CD = 36
+      AND TXN_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  VUT — Wallet Provisioning
+********************************************************************************
+
+/* ---- VUT: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CAST(SUBSTR(B.CLNT_CRD_NO, 7, 9) AS INTEGER)  AS CLNT_NO,
+        B.TXN_DT                                        AS SUCCESS_DT,
+        B.TOKN_REQSTR_ID,
+        C.TOKEN_WALLET_IND
+    FROM DDWV05.CLNT_CRD_POS_LOG  AS B
+    INNER JOIN DL_DECMAN.TOKEN_LIST AS C
+        ON B.TOKN_REQSTR_ID = C.TOKEN_ID
+    WHERE B.AMT1 = 0
+      AND SUBSTR(B.CLNT_CRD_NO, 1, 5)  = '45190'
+      AND SUBSTR(B.VISA_DR_CRD_NO, 1, 5) = '45199'
+      AND SUBSTR(B.TOKN_REQSTR_ID, 1, 1) > '0'
+      AND B.POS_ENTR_MODE_CD_NON_EMV = '000'
+      AND B.SRVC_CD = 36
+      AND C.TOKEN_WALLET_IND = 'Y'
+      AND B.TXN_DT >= DATE '2025-01-01'
+    ORDER BY B.TXN_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- VUT: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM B.TXN_DT)  AS yr,
+        EXTRACT(MONTH FROM B.TXN_DT) AS mo,
+        COUNT(DISTINCT CAST(SUBSTR(B.CLNT_CRD_NO, 7, 9) AS INTEGER))
+                                      AS unique_clients,
+        COUNT(*)                      AS total_events
+    FROM DDWV05.CLNT_CRD_POS_LOG  AS B
+    INNER JOIN DL_DECMAN.TOKEN_LIST AS C
+        ON B.TOKN_REQSTR_ID = C.TOKEN_ID
+    WHERE B.AMT1 = 0
+      AND SUBSTR(B.CLNT_CRD_NO, 1, 5)  = '45190'
+      AND SUBSTR(B.VISA_DR_CRD_NO, 1, 5) = '45199'
+      AND SUBSTR(B.TOKN_REQSTR_ID, 1, 1) > '0'
+      AND B.POS_ENTR_MODE_CD_NON_EMV = '000'
+      AND B.SRVC_CD = 36
+      AND C.TOKEN_WALLET_IND = 'Y'
+      AND B.TXN_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  VAW — Wallet Provisioning
+********************************************************************************
+
+/* ---- VAW: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CAST(SUBSTR(B.CLNT_CRD_NO, 7, 9) AS INTEGER)  AS CLNT_NO,
+        B.TXN_DT                                        AS SUCCESS_DT,
+        B.TOKN_REQSTR_ID,
+        C.TOKEN_WALLET_IND
+    FROM DDWV05.CLNT_CRD_POS_LOG  AS B
+    INNER JOIN DL_DECMAN.TOKEN_LIST AS C
+        ON B.TOKN_REQSTR_ID = C.TOKEN_ID
+    WHERE B.AMT1 = 0
+      AND SUBSTR(B.CLNT_CRD_NO, 1, 5)  = '45190'
+      AND SUBSTR(B.VISA_DR_CRD_NO, 1, 5) = '45199'
+      AND SUBSTR(B.TOKN_REQSTR_ID, 1, 1) > '0'
+      AND B.POS_ENTR_MODE_CD_NON_EMV = '000'
+      AND B.SRVC_CD = 36
+      AND C.TOKEN_WALLET_IND = 'Y'
+      AND B.TXN_DT >= DATE '2025-01-01'
+    ORDER BY B.TXN_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- VAW: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM B.TXN_DT)  AS yr,
+        EXTRACT(MONTH FROM B.TXN_DT) AS mo,
+        COUNT(DISTINCT CAST(SUBSTR(B.CLNT_CRD_NO, 7, 9) AS INTEGER))
+                                      AS unique_clients,
+        COUNT(*)                      AS total_events
+    FROM DDWV05.CLNT_CRD_POS_LOG  AS B
+    INNER JOIN DL_DECMAN.TOKEN_LIST AS C
+        ON B.TOKN_REQSTR_ID = C.TOKEN_ID
+    WHERE B.AMT1 = 0
+      AND SUBSTR(B.CLNT_CRD_NO, 1, 5)  = '45190'
+      AND SUBSTR(B.VISA_DR_CRD_NO, 1, 5) = '45199'
+      AND SUBSTR(B.TOKN_REQSTR_ID, 1, 1) > '0'
+      AND B.POS_ENTR_MODE_CD_NON_EMV = '000'
+      AND B.SRVC_CD = 36
+      AND C.TOKEN_WALLET_IND = 'Y'
+      AND B.TXN_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  IRI — Intl Money Transfer
+********************************************************************************
+
+/* ---- IRI: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CLNT_NO,
+        CAPTR_DT          AS SUCCESS_DT,
+        EVNT_ID,
+        EVNT_AMT_CAD,
+        CHNL_TYP_CD,
+        EVNT_CRNCY_CD
+    FROM DDWV01.EXT_CDS_CHNL_EVNT
+    WHERE ACTVY_TYP_CD = '031'
+      AND CAPTR_DT >= DATE '2025-01-01'
+    ORDER BY CAPTR_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- IRI: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM CAPTR_DT)  AS yr,
+        EXTRACT(MONTH FROM CAPTR_DT) AS mo,
+        COUNT(DISTINCT CLNT_NO)      AS unique_clients,
+        COUNT(DISTINCT EVNT_ID)      AS unique_transactions,
+        SUM(EVNT_AMT_CAD)            AS total_amt_cad
+    FROM DDWV01.EXT_CDS_CHNL_EVNT
+    WHERE ACTVY_TYP_CD = '031'
+      AND CAPTR_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  O2P — Overdraft Open
+********************************************************************************
+
+/* ---- O2P: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        A.CLNT_NO,
+        D.PROD_APP_COMPL_DT   AS SUCCESS_DT,
+        D.APPL_FOR_PROD_TYP,
+        D.PROD_APP_STS_CD,
+        D.CR_APP_ID
+    FROM DDWV01.CR_APP_CLNT_RELTN        AS A
+    JOIN DDWV01.OVRL_CR_APP              AS B
+        ON B.CR_APP_ID  = A.CR_APP_ID
+        AND B.SYS_SRC   = A.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
+        ON A.CR_APP_ID          = C.CR_APP_ID
+        AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
+        AND A.SYS_SRC_ID        = C.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_PROD              AS D
+        ON C.CR_APP_ID          = D.CR_APP_ID
+        AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
+        AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
+      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.PROD_APP_COMPL_DT IS NOT NULL
+      AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
+    ORDER BY D.PROD_APP_COMPL_DT DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- O2P: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM D.PROD_APP_COMPL_DT)  AS yr,
+        EXTRACT(MONTH FROM D.PROD_APP_COMPL_DT) AS mo,
+        COUNT(DISTINCT A.CLNT_NO)                AS unique_clients,
+        COUNT(*)                                 AS total_events,
+        D.APPL_FOR_PROD_TYP
+    FROM DDWV01.CR_APP_CLNT_RELTN        AS A
+    JOIN DDWV01.OVRL_CR_APP              AS B
+        ON B.CR_APP_ID  = A.CR_APP_ID
+        AND B.SYS_SRC   = A.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
+        ON A.CR_APP_ID          = C.CR_APP_ID
+        AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
+        AND A.SYS_SRC_ID        = C.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_PROD              AS D
+        ON C.CR_APP_ID          = D.CR_APP_ID
+        AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
+        AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
+      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.PROD_APP_COMPL_DT IS NOT NULL
+      AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
+    GROUP BY 1, 2, D.APPL_FOR_PROD_TYP
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  RAT — RESP Open
+********************************************************************************
+
+/* ---- RAT: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        OWN.CLNT_NO,
+        HIST.DT_OPENED         AS SUCCESS_DT,
+        HIST.INVSTMT_PLN_TYPE,
+        HIST.OP_CLS_STS,
+        HIST.AR_ID,
+        OWN.MTH_END_DT
+    FROM DG6V01.ARNGMNT_OWN_HIST   AS OWN
+    INNER JOIN DG6V01.ARNGMNT_HIST  AS HIST
+        ON OWN.MIF_ACCT_NO  = HIST.MIF_ACCT_NO
+        AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
+        AND OWN.AR_ID        = HIST.AR_ID
+        AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    WHERE HIST.OP_CLS_STS = 'O'
+      AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND HIST.DT_OPENED >= DATE '2025-01-01'
+    ORDER BY HIST.DT_OPENED DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- RAT: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM HIST.DT_OPENED)  AS yr,
+        EXTRACT(MONTH FROM HIST.DT_OPENED) AS mo,
+        COUNT(DISTINCT OWN.CLNT_NO)        AS unique_clients,
+        COUNT(*)                           AS total_events
+    FROM DG6V01.ARNGMNT_OWN_HIST   AS OWN
+    INNER JOIN DG6V01.ARNGMNT_HIST  AS HIST
+        ON OWN.MIF_ACCT_NO  = HIST.MIF_ACCT_NO
+        AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
+        AND OWN.AR_ID        = HIST.AR_ID
+        AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    WHERE HIST.OP_CLS_STS = 'O'
+      AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND HIST.DT_OPENED >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  IDE — Direct Investing Open
+********************************************************************************
+
+/* ---- IDE: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CLNT_NO,
+        COALESCE(DI_DT_OPEN, IE_DT_OPEN) AS SUCCESS_DT,
+        DI_DT_OPEN,
+        IE_DT_OPEN,
+        Control,
+        Success
+    FROM dl_mr_prod.NBO_IDE_Acquisition
+    WHERE Success = 1
+      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
+    ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- IDE: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
+        EXTRACT(MONTH FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN)) AS mo,
+        COUNT(DISTINCT CLNT_NO)   AS unique_clients,
+        COUNT(*)                  AS total_events
+    FROM dl_mr_prod.NBO_IDE_Acquisition
+    WHERE Success = 1
+      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  GIS — GIC Open
+********************************************************************************
+
+/* ---- GIS: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CLNT_NO,
+        dt_open               AS SUCCESS_DT,
+        Control,
+        Success
+    FROM dl_mr_prod.NBO_GIC_Acquisition
+    WHERE Success = 1
+      AND dt_open >= DATE '2025-01-01'
+    ORDER BY dt_open DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- GIS: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM dt_open)  AS yr,
+        EXTRACT(MONTH FROM dt_open) AS mo,
+        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
+        COUNT(*)                    AS total_events
+    FROM dl_mr_prod.NBO_GIC_Acquisition
+    WHERE Success = 1
+      AND dt_open >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;
+
+
+********************************************************************************
+  TAO — Registered Acct Open
+********************************************************************************
+
+/* ---- TAO: ORGANIC — Sample (TOP 10) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT TOP 10
+        CLNT_NO,
+        dt_open               AS SUCCESS_DT,
+        PLN_AR_ID,
+        Control
+    FROM dl_mr_prod.NBO_TAO_Acquisition
+    WHERE PLN_AR_ID IS NOT NULL
+      AND dt_open >= DATE '2025-01-01'
+    ORDER BY dt_open DESC
+
+);
+disconnect from teradata;
+quit;
+
+/* ---- TAO: ORGANIC — Summary (by year-month) ---- */
+
+proc sql;
+%connectsql
+select * from connection to teradata (
+
+    SELECT
+        EXTRACT(YEAR FROM dt_open)  AS yr,
+        EXTRACT(MONTH FROM dt_open) AS mo,
+        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
+        COUNT(*)                    AS total_events
+    FROM dl_mr_prod.NBO_TAO_Acquisition
+    WHERE PLN_AR_ID IS NOT NULL
+      AND dt_open >= DATE '2025-01-01'
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+disconnect from teradata;
+quit;

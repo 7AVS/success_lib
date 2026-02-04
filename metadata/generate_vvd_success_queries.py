@@ -77,15 +77,15 @@ def _card_actv_mapping(mne):
 
 def _card_usage_mapping(mne):
     return [
-        ("clnt_no",            "DDWV01.VISA_DR_CRD_DLY",  "CLNT_NO"),
-        ("acct_no",            "DDWV01.VISA_DR_CRD_DLY",  ""),
-        ("amount",             "",                          ""),
-        ("event_mnemonic_cd",  "",                          mne),
-        ("event_type_cd",      "",                          ""),
-        ("event_attributes",   "DDWV01.VISA_DR_CRD_DLY",  "JSON(STS_CD, SRVC_ID)"),
-        ("event_dt",           "DDWV01.VISA_DR_CRD_DLY",  "ACTV_DT"),
-        ("snap_dt",            "",                          "<GENERATED>"),
-        ("job_id",             "",                          "<GENERATED>"),
+        ("clnt_no",            "DDWV05.CLNT_CRD_POS_LOG",  "CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)"),
+        ("acct_no",            "DDWV05.CLNT_CRD_POS_LOG",  "CLNT_CRD_NO"),
+        ("amount",             "DDWV05.CLNT_CRD_POS_LOG",  "AMT1"),
+        ("event_mnemonic_cd",  "",                           mne),
+        ("event_type_cd",      "",                           ""),
+        ("event_attributes",   "DDWV05.CLNT_CRD_POS_LOG",  "JSON(TXN_TP, MSG_TP, SRVC_CD)"),
+        ("event_dt",           "DDWV05.CLNT_CRD_POS_LOG",  "TXN_DT"),
+        ("snap_dt",            "",                           "<GENERATED>"),
+        ("job_id",             "",                           "<GENERATED>"),
     ]
 
 def _wallet_mapping(mne):
@@ -139,6 +139,7 @@ select * from connection to teradata (
       AND SRVC_ID = 36
       AND ISS_DT IS NOT NULL
       AND SNAP_DT = {SNAP_SUBQUERY}
+      AND ISS_DT >= DATE '2025-01-01'
     ORDER BY ISS_DT DESC
 
 );
@@ -160,6 +161,7 @@ select * from connection to teradata (
       AND SRVC_ID = 36
       AND ISS_DT IS NOT NULL
       AND SNAP_DT = {SNAP_SUBQUERY}
+      AND ISS_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -191,6 +193,7 @@ select * from connection to teradata (
       AND A.SNAP_DT = {SNAP_SUBQUERY}
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.ISS_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.ISS_DT >= DATE '2025-01-01'
     ORDER BY A.ISS_DT DESC
 
 );
@@ -216,6 +219,7 @@ select * from connection to teradata (
       AND A.SNAP_DT = {SNAP_SUBQUERY}
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.ISS_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.ISS_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -244,6 +248,7 @@ select * from connection to teradata (
       AND ISS_DT IS NOT NULL
       AND ACTV_DT IS NOT NULL
       AND SNAP_DT = {SNAP_SUBQUERY}
+      AND ACTV_DT >= DATE '2025-01-01'
     ORDER BY ACTV_DT DESC
 
 );
@@ -266,6 +271,7 @@ select * from connection to teradata (
       AND ISS_DT IS NOT NULL
       AND ACTV_DT IS NOT NULL
       AND SNAP_DT = {SNAP_SUBQUERY}
+      AND ACTV_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -298,6 +304,7 @@ select * from connection to teradata (
       AND A.SNAP_DT = {SNAP_SUBQUERY}
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.ACTV_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.ACTV_DT >= DATE '2025-01-01'
     ORDER BY A.ACTV_DT DESC
 
 );
@@ -324,6 +331,7 @@ select * from connection to teradata (
       AND A.SNAP_DT = {SNAP_SUBQUERY}
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.ACTV_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.ACTV_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -336,42 +344,46 @@ quit;"""
 # --- CARD USAGE (VUI) ------------------------------------------------------
 
 def card_usage_organic():
-    sample = f"""\
+    sample = """\
 proc sql;
 %connectsql
 select * from connection to teradata (
 
     SELECT TOP 10
-        CLNT_NO,
-        ACTV_DT       AS SUCCESS_DT,
-        STS_CD,
-        SRVC_ID
-    FROM DDWV01.VISA_DR_CRD_DLY
-    WHERE STS_CD IN ('06','08')
-      AND SRVC_ID = 36
-      AND ISS_DT IS NOT NULL
-      AND SNAP_DT = {SNAP_SUBQUERY}
-    ORDER BY ACTV_DT DESC
+        CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER)  AS CLNT_NO,
+        TXN_DT            AS SUCCESS_DT,
+        AMT1,
+        TXN_TP,
+        MSG_TP,
+        SRVC_CD
+    FROM DDWV05.CLNT_CRD_POS_LOG
+    WHERE AMT1 > 0
+      AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
+      AND SRVC_CD = 36
+      AND TXN_DT >= DATE '2025-01-01'
+    ORDER BY TXN_DT DESC
 
 );
 disconnect from teradata;
 quit;"""
 
-    summary = f"""\
+    summary = """\
 proc sql;
 %connectsql
 select * from connection to teradata (
 
     SELECT
-        EXTRACT(YEAR FROM ACTV_DT)  AS yr,
-        EXTRACT(MONTH FROM ACTV_DT) AS mo,
-        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
-        COUNT(*)                    AS total_events
-    FROM DDWV01.VISA_DR_CRD_DLY
-    WHERE STS_CD IN ('06','08')
-      AND SRVC_ID = 36
-      AND ISS_DT IS NOT NULL
-      AND SNAP_DT = {SNAP_SUBQUERY}
+        EXTRACT(YEAR FROM TXN_DT)  AS yr,
+        EXTRACT(MONTH FROM TXN_DT) AS mo,
+        COUNT(DISTINCT CAST(SUBSTR(CLNT_CRD_NO, 7, 9) AS INTEGER))
+                                    AS unique_clients,
+        COUNT(*)                    AS total_events,
+        SUM(AMT1)                   AS total_amount
+    FROM DDWV05.CLNT_CRD_POS_LOG
+    WHERE AMT1 > 0
+      AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
+      AND SRVC_CD = 36
+      AND TXN_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -388,22 +400,23 @@ proc sql;
 select * from connection to teradata (
 
     SELECT TOP 10
-        A.CLNT_NO,
-        A.ACTV_DT           AS SUCCESS_DT,
-        A.STS_CD,
+        CAST(SUBSTR(A.CLNT_CRD_NO, 7, 9) AS INTEGER)  AS CLNT_NO,
+        A.TXN_DT             AS SUCCESS_DT,
+        A.AMT1,
+        A.TXN_TP,
         B.TACTIC_ID,
         B.TREATMT_STRT_DT,
         B.TREATMT_END_DT
-    FROM DDWV01.VISA_DR_CRD_DLY        AS A
+    FROM DDWV05.CLNT_CRD_POS_LOG        AS A
     INNER JOIN DG6V01.TACTIC_EVNT_IP_AR_HIST AS B
-        ON A.CLNT_NO = B.CLNT_NO
-    WHERE A.STS_CD IN ('06','08')
-      AND A.SRVC_ID = 36
-      AND A.ISS_DT IS NOT NULL
-      AND A.SNAP_DT = {SNAP_SUBQUERY}
+        ON CAST(SUBSTR(A.CLNT_CRD_NO, 7, 9) AS INTEGER) = B.CLNT_NO
+    WHERE A.AMT1 > 0
+      AND SUBSTR(A.CLNT_CRD_NO, 1, 5) = '45190'
+      AND A.SRVC_CD = 36
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
-      AND A.ACTV_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
-    ORDER BY A.ACTV_DT DESC
+      AND A.TXN_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.TXN_DT >= DATE '2025-01-01'
+    ORDER BY A.TXN_DT DESC
 
 );
 disconnect from teradata;
@@ -415,19 +428,21 @@ proc sql;
 select * from connection to teradata (
 
     SELECT
-        EXTRACT(YEAR FROM A.ACTV_DT)  AS yr,
-        EXTRACT(MONTH FROM A.ACTV_DT) AS mo,
-        COUNT(DISTINCT A.CLNT_NO)     AS unique_clients,
-        COUNT(*)                      AS total_events
-    FROM DDWV01.VISA_DR_CRD_DLY        AS A
+        EXTRACT(YEAR FROM A.TXN_DT)  AS yr,
+        EXTRACT(MONTH FROM A.TXN_DT) AS mo,
+        COUNT(DISTINCT CAST(SUBSTR(A.CLNT_CRD_NO, 7, 9) AS INTEGER))
+                                      AS unique_clients,
+        COUNT(*)                      AS total_events,
+        SUM(A.AMT1)                   AS total_amount
+    FROM DDWV05.CLNT_CRD_POS_LOG        AS A
     INNER JOIN DG6V01.TACTIC_EVNT_IP_AR_HIST AS B
-        ON A.CLNT_NO = B.CLNT_NO
-    WHERE A.STS_CD IN ('06','08')
-      AND A.SRVC_ID = 36
-      AND A.ISS_DT IS NOT NULL
-      AND A.SNAP_DT = {SNAP_SUBQUERY}
+        ON CAST(SUBSTR(A.CLNT_CRD_NO, 7, 9) AS INTEGER) = B.CLNT_NO
+    WHERE A.AMT1 > 0
+      AND SUBSTR(A.CLNT_CRD_NO, 1, 5) = '45190'
+      AND A.SRVC_CD = 36
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
-      AND A.ACTV_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.TXN_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.TXN_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -460,6 +475,7 @@ select * from connection to teradata (
       AND B.POS_ENTR_MODE_CD_NON_EMV = '000'
       AND B.SRVC_CD = 36
       AND C.TOKEN_WALLET_IND = 'Y'
+      AND B.TXN_DT >= DATE '2025-01-01'
     ORDER BY B.TXN_DT DESC
 
 );
@@ -487,6 +503,7 @@ select * from connection to teradata (
       AND B.POS_ENTR_MODE_CD_NON_EMV = '000'
       AND B.SRVC_CD = 36
       AND C.TOKEN_WALLET_IND = 'Y'
+      AND B.TXN_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -522,6 +539,7 @@ select * from connection to teradata (
       AND C.TOKEN_WALLET_IND = 'Y'
       AND SUBSTR(D.TACTIC_ID, 8, 3) = '{mne}'
       AND B.TXN_DT BETWEEN D.TREATMT_STRT_DT AND D.TREATMT_END_DT
+      AND B.TXN_DT >= DATE '2025-01-01'
     ORDER BY B.TXN_DT DESC
 
 );
@@ -553,6 +571,7 @@ select * from connection to teradata (
       AND C.TOKEN_WALLET_IND = 'Y'
       AND SUBSTR(D.TACTIC_ID, 8, 3) = '{mne}'
       AND B.TXN_DT BETWEEN D.TREATMT_STRT_DT AND D.TREATMT_END_DT
+      AND B.TXN_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -579,6 +598,7 @@ select * from connection to teradata (
         EVNT_CRNCY_CD
     FROM DDWV01.EXT_CDS_CHNL_EVNT
     WHERE ACTVY_TYP_CD = '031'
+      AND CAPTR_DT >= DATE '2025-01-01'
     ORDER BY CAPTR_DT DESC
 
 );
@@ -598,6 +618,7 @@ select * from connection to teradata (
         SUM(EVNT_AMT_CAD)            AS total_amt_cad
     FROM DDWV01.EXT_CDS_CHNL_EVNT
     WHERE ACTVY_TYP_CD = '031'
+      AND CAPTR_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -628,6 +649,7 @@ select * from connection to teradata (
     WHERE A.ACTVY_TYP_CD = '031'
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.CAPTR_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.CAPTR_DT >= DATE '2025-01-01'
     ORDER BY A.CAPTR_DT DESC
 
 );
@@ -651,6 +673,7 @@ select * from connection to teradata (
     WHERE A.ACTVY_TYP_CD = '031'
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.CAPTR_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
+      AND A.CAPTR_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -703,6 +726,7 @@ select * from connection to teradata (
     WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
       AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_COMPL_DT IS NOT NULL
+      AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
     ORDER BY D.PROD_APP_COMPL_DT DESC
 
 );
@@ -735,6 +759,7 @@ select * from connection to teradata (
     WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
       AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_COMPL_DT IS NOT NULL
+      AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
     GROUP BY 1, 2, D.APPL_FOR_PROD_TYP
     ORDER BY 1, 2
 
@@ -777,6 +802,7 @@ select * from connection to teradata (
       AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_DT BETWEEN T.TREATMT_STRT_DT AND T.TREATMT_END_DT
       AND D.PROD_APP_COMPL_DT IS NOT NULL
+      AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
     ORDER BY D.PROD_APP_COMPL_DT DESC
 
 );
@@ -813,6 +839,7 @@ select * from connection to teradata (
       AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
       AND D.PROD_APP_DT BETWEEN T.TREATMT_STRT_DT AND T.TREATMT_END_DT
       AND D.PROD_APP_COMPL_DT IS NOT NULL
+      AND D.PROD_APP_COMPL_DT >= DATE '2025-01-01'
     GROUP BY 1, 2, D.APPL_FOR_PROD_TYP
     ORDER BY 1, 2
 
@@ -859,6 +886,7 @@ select * from connection to teradata (
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
     WHERE HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND HIST.DT_OPENED >= DATE '2025-01-01'
     ORDER BY HIST.DT_OPENED DESC
 
 );
@@ -883,6 +911,7 @@ select * from connection to teradata (
         AND OWN.MTH_END_DT   = HIST.MTH_END_DT
     WHERE HIST.OP_CLS_STS = 'O'
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND HIST.DT_OPENED >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -922,6 +951,7 @@ select * from connection to teradata (
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
       AND HIST.DT_OPENED >= T.TREATMT_STRT_DT
       AND HIST.DT_OPENED <= T.TREATMT_END_DT
+      AND HIST.DT_OPENED >= DATE '2025-01-01'
     ORDER BY HIST.DT_OPENED DESC
 
 );
@@ -953,6 +983,7 @@ select * from connection to teradata (
       AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
       AND HIST.DT_OPENED >= T.TREATMT_STRT_DT
       AND HIST.DT_OPENED <= T.TREATMT_END_DT
+      AND HIST.DT_OPENED >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -992,6 +1023,7 @@ select * from connection to teradata (
         Success
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Success = 1
+      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
     ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
 
 );
@@ -1010,6 +1042,7 @@ select * from connection to teradata (
         COUNT(*)                  AS total_events
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Success = 1
+      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -1035,6 +1068,7 @@ select * from connection to teradata (
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Control = 'Action'
       AND Success = 1
+      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
     ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
 
 );
@@ -1054,6 +1088,7 @@ select * from connection to teradata (
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Control = 'Action'
       AND Success = 1
+      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -1091,6 +1126,7 @@ select * from connection to teradata (
         Success
     FROM dl_mr_prod.NBO_GIC_Acquisition
     WHERE Success = 1
+      AND dt_open >= DATE '2025-01-01'
     ORDER BY dt_open DESC
 
 );
@@ -1109,6 +1145,7 @@ select * from connection to teradata (
         COUNT(*)                    AS total_events
     FROM dl_mr_prod.NBO_GIC_Acquisition
     WHERE Success = 1
+      AND dt_open >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -1132,6 +1169,7 @@ select * from connection to teradata (
     FROM dl_mr_prod.NBO_GIC_Acquisition
     WHERE Control = 'Action'
       AND Success = 1
+      AND dt_open >= DATE '2025-01-01'
     ORDER BY dt_open DESC
 
 );
@@ -1151,6 +1189,7 @@ select * from connection to teradata (
     FROM dl_mr_prod.NBO_GIC_Acquisition
     WHERE Control = 'Action'
       AND Success = 1
+      AND dt_open >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -1188,6 +1227,7 @@ select * from connection to teradata (
         Control
     FROM dl_mr_prod.NBO_TAO_Acquisition
     WHERE PLN_AR_ID IS NOT NULL
+      AND dt_open >= DATE '2025-01-01'
     ORDER BY dt_open DESC
 
 );
@@ -1206,6 +1246,7 @@ select * from connection to teradata (
         COUNT(*)                    AS total_events
     FROM dl_mr_prod.NBO_TAO_Acquisition
     WHERE PLN_AR_ID IS NOT NULL
+      AND dt_open >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -1229,6 +1270,7 @@ select * from connection to teradata (
     FROM dl_mr_prod.NBO_TAO_Acquisition
     WHERE Control = 'Action'
       AND PLN_AR_ID IS NOT NULL
+      AND dt_open >= DATE '2025-01-01'
     ORDER BY dt_open DESC
 
 );
@@ -1248,6 +1290,7 @@ select * from connection to teradata (
     FROM dl_mr_prod.NBO_TAO_Acquisition
     WHERE Control = 'Action'
       AND PLN_AR_ID IS NOT NULL
+      AND dt_open >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
