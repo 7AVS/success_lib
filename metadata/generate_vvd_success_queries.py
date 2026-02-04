@@ -660,6 +660,603 @@ QUIT;"""
     return sample, summary
 
 
+# --- O2P  (Overdraft — credit application tables) --------------------------
+
+def _o2p_mapping(mne):
+    return [
+        ("clnt_no",            "DDWV01.CR_APP_CLNT_RELTN",  "CLNT_NO"),
+        ("acct_no",            "DDWV01.CR_APP_PROD",         "PROD_APP_ACCT_TR_NO || APP_ACCT_NO  (derived AR_ID)"),
+        ("amount",             "",                            ""),
+        ("event_mnemonic_cd",  "",                            mne),
+        ("event_type_cd",      "",                            ""),
+        ("event_attributes",   "DDWV01.CR_APP_PROD",         "JSON(APPL_FOR_PROD_TYP, PROD_APP_STS_CD)"),
+        ("event_dt",           "DDWV01.CR_APP_PROD",         "PROD_APP_COMPL_DT"),
+        ("snap_dt",            "",                            "<GENERATED>"),
+        ("job_id",             "",                            "<GENERATED>"),
+    ]
+
+
+def o2p_organic():
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        A.CLNT_NO,
+        D.PROD_APP_COMPL_DT   AS SUCCESS_DT,
+        D.APPL_FOR_PROD_TYP,
+        D.PROD_APP_STS_CD,
+        D.CR_APP_ID
+    FROM DDWV01.CR_APP_CLNT_RELTN        AS A
+    JOIN DDWV01.OVRL_CR_APP              AS B
+        ON B.CR_APP_ID  = A.CR_APP_ID
+        AND B.SYS_SRC   = A.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
+        ON A.CR_APP_ID          = C.CR_APP_ID
+        AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
+        AND A.SYS_SRC_ID        = C.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_PROD              AS D
+        ON C.CR_APP_ID          = D.CR_APP_ID
+        AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
+        AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
+      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.PROD_APP_COMPL_DT IS NOT NULL
+    ORDER BY D.PROD_APP_COMPL_DT DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM D.PROD_APP_COMPL_DT)  AS yr,
+        EXTRACT(MONTH FROM D.PROD_APP_COMPL_DT) AS mo,
+        COUNT(DISTINCT A.CLNT_NO)                AS unique_clients,
+        COUNT(*)                                 AS total_events,
+        D.APPL_FOR_PROD_TYP
+    FROM DDWV01.CR_APP_CLNT_RELTN        AS A
+    JOIN DDWV01.OVRL_CR_APP              AS B
+        ON B.CR_APP_ID  = A.CR_APP_ID
+        AND B.SYS_SRC   = A.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
+        ON A.CR_APP_ID          = C.CR_APP_ID
+        AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
+        AND A.SYS_SRC_ID        = C.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_PROD              AS D
+        ON C.CR_APP_ID          = D.CR_APP_ID
+        AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
+        AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    WHERE D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
+      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.PROD_APP_COMPL_DT IS NOT NULL
+    GROUP BY 1, 2, D.APPL_FOR_PROD_TYP
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+
+def o2p_campaign(mne):
+    sample = f"""\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        A.CLNT_NO,
+        D.PROD_APP_COMPL_DT   AS SUCCESS_DT,
+        D.APPL_FOR_PROD_TYP,
+        D.PROD_APP_STS_CD,
+        T.TACTIC_ID,
+        T.TREATMT_STRT_DT,
+        T.TREATMT_END_DT
+    FROM DG6V01.TACTIC_EVNT_IP_AR_HIST   AS T
+    JOIN DDWV01.CR_APP_CLNT_RELTN        AS A
+        ON T.CLNT_NO = A.CLNT_NO
+    JOIN DDWV01.OVRL_CR_APP              AS B
+        ON B.CR_APP_ID  = A.CR_APP_ID
+        AND B.SYS_SRC   = A.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
+        ON A.CR_APP_ID          = C.CR_APP_ID
+        AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
+        AND A.SYS_SRC_ID        = C.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_PROD              AS D
+        ON C.CR_APP_ID          = D.CR_APP_ID
+        AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
+        AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
+      AND D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
+      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.PROD_APP_DT BETWEEN T.TREATMT_STRT_DT AND T.TREATMT_END_DT
+      AND D.PROD_APP_COMPL_DT IS NOT NULL
+    ORDER BY D.PROD_APP_COMPL_DT DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = f"""\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM D.PROD_APP_COMPL_DT)  AS yr,
+        EXTRACT(MONTH FROM D.PROD_APP_COMPL_DT) AS mo,
+        COUNT(DISTINCT A.CLNT_NO)                AS unique_clients,
+        COUNT(*)                                 AS total_events,
+        D.APPL_FOR_PROD_TYP
+    FROM DG6V01.TACTIC_EVNT_IP_AR_HIST   AS T
+    JOIN DDWV01.CR_APP_CLNT_RELTN        AS A
+        ON T.CLNT_NO = A.CLNT_NO
+    JOIN DDWV01.OVRL_CR_APP              AS B
+        ON B.CR_APP_ID  = A.CR_APP_ID
+        AND B.SYS_SRC   = A.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_CLNT_PROD_RELTN   AS C
+        ON A.CR_APP_ID          = C.CR_APP_ID
+        AND A.CR_APP_CLNT_SEQ_NO = C.CR_APP_CLNT_SEQ_NO
+        AND A.SYS_SRC_ID        = C.SYS_SRC_ID
+    JOIN DDWV01.CR_APP_PROD              AS D
+        ON C.CR_APP_ID          = D.CR_APP_ID
+        AND C.CR_APP_PROD_SEQ_NO = D.CR_APP_PROD_SEQ_NO
+        AND C.SYS_SRC_ID        = D.SYS_SRC_ID
+    WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
+      AND D.APPL_FOR_PROD_TYP IN ('OP','CR','AP')
+      AND D.PROD_STS_CD IN (32,37,45,47,51,56,62)
+      AND D.PROD_APP_DT BETWEEN T.TREATMT_STRT_DT AND T.TREATMT_END_DT
+      AND D.PROD_APP_COMPL_DT IS NOT NULL
+    GROUP BY 1, 2, D.APPL_FOR_PROD_TYP
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+
+# --- RAT  (RESP Open — DG6V01 arrangement tables) -------------------------
+
+def _rat_mapping(mne):
+    return [
+        ("clnt_no",            "DG6V01.ARNGMNT_OWN_HIST",    "CLNT_NO"),
+        ("acct_no",            "DG6V01.ARNGMNT_HIST",         "AR_ID"),
+        ("amount",             "",                              ""),
+        ("event_mnemonic_cd",  "",                              mne),
+        ("event_type_cd",      "",                              ""),
+        ("event_attributes",   "DG6V01.ARNGMNT_HIST",         "JSON(INVSTMT_PLN_TYPE, OP_CLS_STS, MIF_SRVC_ID)"),
+        ("event_dt",           "DG6V01.ARNGMNT_HIST",         "DT_OPENED"),
+        ("snap_dt",            "",                              "<GENERATED>"),
+        ("job_id",             "",                              "<GENERATED>"),
+    ]
+
+
+def rat_organic():
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        OWN.CLNT_NO,
+        HIST.DT_OPENED         AS SUCCESS_DT,
+        HIST.INVSTMT_PLN_TYPE,
+        HIST.OP_CLS_STS,
+        HIST.AR_ID,
+        OWN.MTH_END_DT
+    FROM DG6V01.ARNGMNT_OWN_HIST   AS OWN
+    INNER JOIN DG6V01.ARNGMNT_HIST  AS HIST
+        ON OWN.MIF_ACCT_NO  = HIST.MIF_ACCT_NO
+        AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
+        AND OWN.AR_ID        = HIST.AR_ID
+        AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    WHERE HIST.OP_CLS_STS = 'O'
+      AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+    ORDER BY HIST.DT_OPENED DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM HIST.DT_OPENED)  AS yr,
+        EXTRACT(MONTH FROM HIST.DT_OPENED) AS mo,
+        COUNT(DISTINCT OWN.CLNT_NO)        AS unique_clients,
+        COUNT(*)                           AS total_events
+    FROM DG6V01.ARNGMNT_OWN_HIST   AS OWN
+    INNER JOIN DG6V01.ARNGMNT_HIST  AS HIST
+        ON OWN.MIF_ACCT_NO  = HIST.MIF_ACCT_NO
+        AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
+        AND OWN.AR_ID        = HIST.AR_ID
+        AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    WHERE HIST.OP_CLS_STS = 'O'
+      AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+
+def rat_campaign(mne):
+    sample = f"""\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        T.CLNT_NO,
+        HIST.DT_OPENED         AS SUCCESS_DT,
+        HIST.INVSTMT_PLN_TYPE,
+        HIST.OP_CLS_STS,
+        HIST.AR_ID,
+        T.TACTIC_ID,
+        T.TREATMT_STRT_DT,
+        T.TREATMT_END_DT
+    FROM DG6V01.TACTIC_EVNT_IP_AR_HIST AS T
+    INNER JOIN DG6V01.ARNGMNT_OWN_HIST  AS OWN
+        ON T.CLNT_NO = OWN.CLNT_NO
+        AND OWN.MTH_END_DT = ADD_MONTHS(T.TREATMT_END_DT
+            - (EXTRACT(DAY FROM T.TREATMT_END_DT)) + 1, 1) - 1
+    INNER JOIN DG6V01.ARNGMNT_HIST       AS HIST
+        ON OWN.MIF_ACCT_NO  = HIST.MIF_ACCT_NO
+        AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
+        AND OWN.AR_ID        = HIST.AR_ID
+        AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
+      AND HIST.OP_CLS_STS = 'O'
+      AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND HIST.DT_OPENED >= T.TREATMT_STRT_DT
+      AND HIST.DT_OPENED <= T.TREATMT_END_DT
+    ORDER BY HIST.DT_OPENED DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = f"""\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM HIST.DT_OPENED)  AS yr,
+        EXTRACT(MONTH FROM HIST.DT_OPENED) AS mo,
+        COUNT(DISTINCT T.CLNT_NO)          AS unique_clients,
+        COUNT(*)                           AS total_events
+    FROM DG6V01.TACTIC_EVNT_IP_AR_HIST AS T
+    INNER JOIN DG6V01.ARNGMNT_OWN_HIST  AS OWN
+        ON T.CLNT_NO = OWN.CLNT_NO
+        AND OWN.MTH_END_DT = ADD_MONTHS(T.TREATMT_END_DT
+            - (EXTRACT(DAY FROM T.TREATMT_END_DT)) + 1, 1) - 1
+    INNER JOIN DG6V01.ARNGMNT_HIST       AS HIST
+        ON OWN.MIF_ACCT_NO  = HIST.MIF_ACCT_NO
+        AND OWN.MIF_SRVC_ID  = HIST.MIF_SRVC_ID
+        AND OWN.AR_ID        = HIST.AR_ID
+        AND OWN.MTH_END_DT   = HIST.MTH_END_DT
+    WHERE SUBSTR(T.TACTIC_ID, 8, 3) = '{mne}'
+      AND HIST.OP_CLS_STS = 'O'
+      AND HIST.INVSTMT_PLN_TYPE IN (8)    /* 8 = RESP */
+      AND HIST.DT_OPENED >= T.TREATMT_STRT_DT
+      AND HIST.DT_OPENED <= T.TREATMT_END_DT
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+
+# --- IDE  (Direct Investing / InvestEase — pre-built success table) ---------
+
+def _ide_mapping(mne):
+    return [
+        ("clnt_no",            "dl_mr_prod.NBO_IDE_Acquisition",  "CLNT_NO"),
+        ("acct_no",            "",                                  ""),
+        ("amount",             "",                                  ""),
+        ("event_mnemonic_cd",  "",                                  mne),
+        ("event_type_cd",      "",                                  ""),
+        ("event_attributes",   "dl_mr_prod.NBO_IDE_Acquisition",  "JSON(DI_DT_OPEN, IE_DT_OPEN)"),
+        ("event_dt",           "dl_mr_prod.NBO_IDE_Acquisition",  "COALESCE(DI_DT_OPEN, IE_DT_OPEN)"),
+        ("snap_dt",            "",                                  "<GENERATED>"),
+        ("job_id",             "",                                  "<GENERATED>"),
+    ]
+
+def ide_organic():
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        CLNT_NO,
+        COALESCE(DI_DT_OPEN, IE_DT_OPEN) AS SUCCESS_DT,
+        DI_DT_OPEN,
+        IE_DT_OPEN,
+        Control,
+        Success
+    FROM dl_mr_prod.NBO_IDE_Acquisition
+    WHERE Success = 1
+    ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
+        EXTRACT(MONTH FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN)) AS mo,
+        COUNT(DISTINCT CLNT_NO)   AS unique_clients,
+        COUNT(*)                  AS total_events
+    FROM dl_mr_prod.NBO_IDE_Acquisition
+    WHERE Success = 1
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+def ide_campaign(mne):
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        CLNT_NO,
+        COALESCE(DI_DT_OPEN, IE_DT_OPEN) AS SUCCESS_DT,
+        DI_DT_OPEN,
+        IE_DT_OPEN,
+        Control,
+        Treatmt_strt_dt,
+        Success
+    FROM dl_mr_prod.NBO_IDE_Acquisition
+    WHERE Control = 'Action'
+      AND Success = 1
+    ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
+        EXTRACT(MONTH FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN)) AS mo,
+        COUNT(DISTINCT CLNT_NO)   AS unique_clients,
+        COUNT(*)                  AS total_events
+    FROM dl_mr_prod.NBO_IDE_Acquisition
+    WHERE Control = 'Action'
+      AND Success = 1
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+
+# --- GIS  (GIC Open — pre-built success table) -----------------------------
+
+def _gis_mapping(mne):
+    return [
+        ("clnt_no",            "dl_mr_prod.NBO_GIC_Acquisition",  "CLNT_NO"),
+        ("acct_no",            "",                                  ""),
+        ("amount",             "",                                  ""),
+        ("event_mnemonic_cd",  "",                                  mne),
+        ("event_type_cd",      "",                                  ""),
+        ("event_attributes",   "dl_mr_prod.NBO_GIC_Acquisition",  ""),
+        ("event_dt",           "dl_mr_prod.NBO_GIC_Acquisition",  "dt_open"),
+        ("snap_dt",            "",                                  "<GENERATED>"),
+        ("job_id",             "",                                  "<GENERATED>"),
+    ]
+
+def gis_organic():
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        CLNT_NO,
+        dt_open               AS SUCCESS_DT,
+        Control,
+        Success
+    FROM dl_mr_prod.NBO_GIC_Acquisition
+    WHERE Success = 1
+    ORDER BY dt_open DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM dt_open)  AS yr,
+        EXTRACT(MONTH FROM dt_open) AS mo,
+        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
+        COUNT(*)                    AS total_events
+    FROM dl_mr_prod.NBO_GIC_Acquisition
+    WHERE Success = 1
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+def gis_campaign(mne):
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        CLNT_NO,
+        dt_open               AS SUCCESS_DT,
+        Control,
+        Treatmt_strt_dt,
+        Success
+    FROM dl_mr_prod.NBO_GIC_Acquisition
+    WHERE Control = 'Action'
+      AND Success = 1
+    ORDER BY dt_open DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM dt_open)  AS yr,
+        EXTRACT(MONTH FROM dt_open) AS mo,
+        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
+        COUNT(*)                    AS total_events
+    FROM dl_mr_prod.NBO_GIC_Acquisition
+    WHERE Control = 'Action'
+      AND Success = 1
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+
+# --- TAO  (Registered Account Open — pre-built success table) --------------
+
+def _tao_mapping(mne):
+    return [
+        ("clnt_no",            "dl_mr_prod.NBO_TAO_Acquisition",  "CLNT_NO"),
+        ("acct_no",            "dl_mr_prod.NBO_TAO_Acquisition",  "PLN_AR_ID"),
+        ("amount",             "",                                  ""),
+        ("event_mnemonic_cd",  "",                                  mne),
+        ("event_type_cd",      "",                                  ""),
+        ("event_attributes",   "dl_mr_prod.NBO_TAO_Acquisition",  ""),
+        ("event_dt",           "dl_mr_prod.NBO_TAO_Acquisition",  "dt_open"),
+        ("snap_dt",            "",                                  "<GENERATED>"),
+        ("job_id",             "",                                  "<GENERATED>"),
+    ]
+
+def tao_organic():
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        CLNT_NO,
+        dt_open               AS SUCCESS_DT,
+        PLN_AR_ID,
+        Control
+    FROM dl_mr_prod.NBO_TAO_Acquisition
+    WHERE PLN_AR_ID IS NOT NULL
+    ORDER BY dt_open DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM dt_open)  AS yr,
+        EXTRACT(MONTH FROM dt_open) AS mo,
+        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
+        COUNT(*)                    AS total_events
+    FROM dl_mr_prod.NBO_TAO_Acquisition
+    WHERE PLN_AR_ID IS NOT NULL
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+def tao_campaign(mne):
+    sample = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT TOP 10
+        CLNT_NO,
+        dt_open               AS SUCCESS_DT,
+        PLN_AR_ID,
+        Control,
+        Treatmt_strt_dt
+    FROM dl_mr_prod.NBO_TAO_Acquisition
+    WHERE Control = 'Action'
+      AND PLN_AR_ID IS NOT NULL
+    ORDER BY dt_open DESC
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+
+    summary = """\
+PROC SQL;
+CONNECT TO TERADATA AS EDW (MODE=TERADATA);
+SELECT * FROM CONNECTION TO EDW (
+
+    SELECT
+        EXTRACT(YEAR FROM dt_open)  AS yr,
+        EXTRACT(MONTH FROM dt_open) AS mo,
+        COUNT(DISTINCT CLNT_NO)     AS unique_clients,
+        COUNT(*)                    AS total_events
+    FROM dl_mr_prod.NBO_TAO_Acquisition
+    WHERE Control = 'Action'
+      AND PLN_AR_ID IS NOT NULL
+    GROUP BY 1, 2
+    ORDER BY 1, 2
+
+);
+DISCONNECT FROM EDW;
+QUIT;"""
+    return sample, summary
+
+
 # ---------------------------------------------------------------------------
 # Tab configuration
 # (mnemonic, title, mapping_fn, organic_fn, campaign_fn)
@@ -672,6 +1269,11 @@ TABS = [
     ("VUT", "Wallet Provisioning",      _wallet_mapping,     wallet_organic,     wallet_campaign),
     ("VAW", "Wallet Provisioning",      _wallet_mapping,     wallet_organic,     wallet_campaign),
     ("IRI", "Intl Money Transfer",      _imt_mapping,        imt_organic,        imt_campaign),
+    ("O2P", "Overdraft Open",           _o2p_mapping,        o2p_organic,        o2p_campaign),
+    ("RAT", "RESP Open",               _rat_mapping,        rat_organic,        rat_campaign),
+    ("IDE", "Direct Investing Open",   _ide_mapping,        ide_organic,        ide_campaign),
+    ("GIS", "GIC Open",               _gis_mapping,        gis_organic,        gis_campaign),
+    ("TAO", "Registered Acct Open",   _tao_mapping,        tao_organic,        tao_campaign),
 ]
 
 

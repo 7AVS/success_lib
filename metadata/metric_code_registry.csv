@@ -26,7 +26,7 @@ LTA,3,Pre-approved Royal Credit Line (LTA),Loans,Conversion,Product Open,Royal C
 RCL,2,Pre-approved Royal Credit Line (TPA),Loans,Conversion,Product Open,Royal Credit Line Open,,LN_RCL_001,Royal Credit Line Open,Conversion,,,,,,not_created,pending_sas_search,shares LN_RCL_001 with LTA
 RCU,4,Royal Credit Line Utilization,Loans,Conversion,Product Usage,Royal Credit Line Balance,$1,LN_RCU_001,Royal Credit Line Balance,Conversion,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
 RIS,8,RCL Balance Stimulation,Loans,#N/A,Product Usage,Royal Credit Line Balance,$1,LN_RCU_001,Royal Credit Line Balance,Conversion,,,,,,not_created,pending_sas_search,shares LN_RCU_001 with RCU
-O2P,45,Pre-approved Overdraft,Loans,Acquisition,Product Open,Overdraft Open,,LN_ODP_001,Overdraft Open,Conversion,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
+O2P,45,Pre-approved Overdraft,Loans,Acquisition,Product Open,Overdraft Open,,LN_ODP_001,Overdraft Open,Conversion,EDW,DDWV01.CR_APP_PROD + CR_APP_CLNT_RELTN + OVRL_CR_APP + CR_APP_CLNT_PROD_RELTN,PROD_APP_COMPL_DT,Client,,active,complete,none — ready for engineering
 RCR,27,RCL Price Optimization,Loans,Conversion,Product Open,MISSING,,,,,,,,,,not_created,missing_definition,define success metric first
 COR,33,Student RCL Repayment Terms,Loans,#N/A,#N/A,MISSING,,,,,,,,,,not_created,missing_definition,define success metric first
 ESV,10,New eSavings Bonus Interest Offer,PBA,Conversion,Product Open,PBA Open,HISA,PBA_OPN_001,PBA Open,Conversion,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
@@ -43,9 +43,9 @@ RMG,32,GIC Maturity,Investments,Engagement,Product Open,GIC Renewal,,INV_RNW_001
 IDE,15,Invest and Trade Online,Investments,Conversion,Product Open,Investment Open,Direct Investing or InvestEase,INV_DI_001,Direct Investing Open,Conversion,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
 GNE,31,Explore & Continue GIC Journey,Investments,Engagement,Product Open,Investment Open,All GIC >$0,INV_GIC_001,GIC Open,Conversion,,,,,,not_created,pending_sas_search,shares INV_GIC_001 with GIS
 MOS,38,Investment Advice Connection,Investments,Engagement,Product Usage,Positive Long-Term Net Sales,,INV_NTS_001,Long-Term Net Sales,Engagement,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
-RAT,39,Explore Education Savings,Investments,Acquisition,Product Open,Investment Open,RESP,INV_RSP_001,RESP Open,Conversion,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
+RAT,39,Explore Education Savings,Investments,Acquisition,Product Open,Investment Open,RESP,INV_RSP_001,RESP Open,Conversion,EDW,DG6V01.ARNGMNT_OWN_HIST + ARNGMNT_HIST,DT_OPENED,Client,,active,complete,none — ready for engineering
 NMI,23,NOMI Find & Save,Digital Footprint,Conversion,Product Open,NOMI Open,,DF_NMI_001,NOMI Enrollment,Conversion,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
-IRI,35,International Remittance,Payments,Engagement,Product Action,International Money Transfer,IMT Transaction,PAY_IMT_001,IMT Transaction,Engagement,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
+IRI,35,International Remittance,Payments,Engagement,Product Action,International Money Transfer,IMT Transaction,PAY_IMT_001,IMT Transaction,Engagement,EDW,DDWV01.EXT_CDS_CHNL_EVNT,CAPTR_DT,Client,,active,complete,none — ready for engineering
 IPC,42,International Money Transfer Winback,Payments,Engagement,Product Retention,International Money Transfer,IMT Transaction,PAY_IMT_001,IMT Transaction,Engagement,,,,,,not_created,pending_sas_search,shares PAY_IMT_001 with IRI
 EBR,28,PBA Value Program,Value Program,Conversion,Product Open,Value Program Enrollment,,VP_ENR_001,Value Program Enrollment,Conversion,,,,,,not_created,pending_sas_search,extract SAS logic then create code file
 PVE,37,Value Program Enrollment,Value Program,Engagement,Product Open,Product Cross-Sell,,VP_ENR_001,Value Program Enrollment,Conversion,,,,,,not_created,pending_sas_search,shares VP_ENR_001 with EBR
