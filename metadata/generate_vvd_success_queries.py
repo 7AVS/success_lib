@@ -109,7 +109,7 @@ def _imt_mapping(mne):
         ("amount",             "DDWV01.EXT_CDS_CHNL_EVNT",  "EVNT_AMT_CAD"),
         ("event_mnemonic_cd",  "",                            mne),
         ("event_type_cd",      "",                            ""),
-        ("event_attributes",   "DDWV01.EXT_CDS_CHNL_EVNT",  "JSON(CHNL_TYP_CD, EVNT_CRNCY_CD, ACTVY_TYP_CD)"),
+        ("event_attributes",   "DDWV01.EXT_CDS_CHNL_EVNT",  "JSON(CHNL_TYP_CD, EVNT_CRNCY_CD, ACTVY_TYP_CD, SRC_DTA_STORE_CD)"),
         ("event_dt",           "DDWV01.EXT_CDS_CHNL_EVNT",  "CAPTR_DT"),
         ("snap_dt",            "",                            "<GENERATED>"),
         ("job_id",             "",                            "<GENERATED>"),
@@ -358,6 +358,7 @@ select * from connection to teradata (
         SRVC_CD
     FROM DDWV05.CLNT_CRD_POS_LOG
     WHERE AMT1 > 0
+      AND TXN_TP IN (10, 13)
       AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
       AND SRVC_CD = 36
       AND TXN_DT >= DATE '2025-01-01'
@@ -381,6 +382,7 @@ select * from connection to teradata (
         SUM(AMT1)                   AS total_amount
     FROM DDWV05.CLNT_CRD_POS_LOG
     WHERE AMT1 > 0
+      AND TXN_TP IN (10, 13)
       AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
       AND SRVC_CD = 36
       AND TXN_DT >= DATE '2025-01-01'
@@ -411,6 +413,7 @@ select * from connection to teradata (
     INNER JOIN DG6V01.TACTIC_EVNT_IP_AR_HIST AS B
         ON CAST(SUBSTR(A.CLNT_CRD_NO, 7, 9) AS INTEGER) = B.CLNT_NO
     WHERE A.AMT1 > 0
+      AND A.TXN_TP IN (10, 13)
       AND SUBSTR(A.CLNT_CRD_NO, 1, 5) = '45190'
       AND A.SRVC_CD = 36
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
@@ -438,6 +441,7 @@ select * from connection to teradata (
     INNER JOIN DG6V01.TACTIC_EVNT_IP_AR_HIST AS B
         ON CAST(SUBSTR(A.CLNT_CRD_NO, 7, 9) AS INTEGER) = B.CLNT_NO
     WHERE A.AMT1 > 0
+      AND A.TXN_TP IN (10, 13)
       AND SUBSTR(A.CLNT_CRD_NO, 1, 5) = '45190'
       AND A.SRVC_CD = 36
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
@@ -598,6 +602,8 @@ select * from connection to teradata (
         EVNT_CRNCY_CD
     FROM DDWV01.EXT_CDS_CHNL_EVNT
     WHERE ACTVY_TYP_CD = '031'
+      AND CHNL_TYP_CD IN ('021','034')
+      AND SRC_DTA_STORE_CD IN ('139','140')
       AND CAPTR_DT >= DATE '2025-01-01'
     ORDER BY CAPTR_DT DESC
 
@@ -618,6 +624,8 @@ select * from connection to teradata (
         SUM(EVNT_AMT_CAD)            AS total_amt_cad
     FROM DDWV01.EXT_CDS_CHNL_EVNT
     WHERE ACTVY_TYP_CD = '031'
+      AND CHNL_TYP_CD IN ('021','034')
+      AND SRC_DTA_STORE_CD IN ('139','140')
       AND CAPTR_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
@@ -647,6 +655,8 @@ select * from connection to teradata (
     INNER JOIN DG6V01.TACTIC_EVNT_IP_AR_HIST AS B
         ON A.CLNT_NO = B.CLNT_NO
     WHERE A.ACTVY_TYP_CD = '031'
+      AND A.CHNL_TYP_CD IN ('021','034')
+      AND A.SRC_DTA_STORE_CD IN ('139','140')
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.CAPTR_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
       AND A.CAPTR_DT >= DATE '2025-01-01'
@@ -671,6 +681,8 @@ select * from connection to teradata (
     INNER JOIN DG6V01.TACTIC_EVNT_IP_AR_HIST AS B
         ON A.CLNT_NO = B.CLNT_NO
     WHERE A.ACTVY_TYP_CD = '031'
+      AND A.CHNL_TYP_CD IN ('021','034')
+      AND A.SRC_DTA_STORE_CD IN ('139','140')
       AND SUBSTR(B.TACTIC_ID, 8, 3) = '{mne}'
       AND A.CAPTR_DT BETWEEN B.TREATMT_STRT_DT AND B.TREATMT_END_DT
       AND A.CAPTR_DT >= DATE '2025-01-01'
@@ -1043,46 +1055,50 @@ def _ide_mapping(mne):
         ("event_mnemonic_cd",  "",                                  mne),
         ("event_type_cd",      "",                                  ""),
         ("event_attributes",   "dl_mr_prod.NBO_IDE_Acquisition",  "JSON(DI_DT_OPEN, IE_DT_OPEN)"),
-        ("event_dt",           "dl_mr_prod.NBO_IDE_Acquisition",  "COALESCE(DI_DT_OPEN, IE_DT_OPEN)"),
+        ("event_dt",           "dl_mr_prod.NBO_IDE_Acquisition",  "CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN ELSE NULL END"),
         ("snap_dt",            "",                                  "<GENERATED>"),
         ("job_id",             "",                                  "<GENERATED>"),
     ]
 
 def ide_organic():
-    sample = """\
+    dt = ("CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN "
+          "WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN "
+          "WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN "
+          "ELSE NULL END")
+    sample = f"""\
 proc sql;
 %connectsql
 select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
-        COALESCE(DI_DT_OPEN, IE_DT_OPEN) AS SUCCESS_DT,
+        {dt} AS SUCCESS_DT,
         DI_DT_OPEN,
         IE_DT_OPEN,
         Control,
         Success
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Success = 1
-      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
-    ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
+      AND {dt} >= DATE '2025-01-01'
+    ORDER BY 2 DESC
 
 );
 disconnect from teradata;
 quit;"""
 
-    summary = """\
+    summary = f"""\
 proc sql;
 %connectsql
 select * from connection to teradata (
 
     SELECT
-        EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
-        EXTRACT(MONTH FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN)) AS mo,
+        EXTRACT(YEAR FROM {dt})  AS yr,
+        EXTRACT(MONTH FROM {dt}) AS mo,
         COUNT(DISTINCT CLNT_NO)   AS unique_clients,
         COUNT(*)                  AS total_events
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Success = 1
-      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
+      AND {dt} >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 
@@ -1092,14 +1108,18 @@ quit;"""
     return sample, summary
 
 def ide_campaign(mne):
-    sample = """\
+    dt = ("CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN "
+          "WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN "
+          "WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN "
+          "ELSE NULL END")
+    sample = f"""\
 proc sql;
 %connectsql
 select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
-        COALESCE(DI_DT_OPEN, IE_DT_OPEN) AS SUCCESS_DT,
+        {dt} AS SUCCESS_DT,
         DI_DT_OPEN,
         IE_DT_OPEN,
         Control,
@@ -1108,27 +1128,27 @@ select * from connection to teradata (
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Control = 'Action'
       AND Success = 1
-      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
-    ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
+      AND {dt} >= DATE '2025-01-01'
+    ORDER BY 2 DESC
 
 );
 disconnect from teradata;
 quit;"""
 
-    summary = """\
+    summary = f"""\
 proc sql;
 %connectsql
 select * from connection to teradata (
 
     SELECT
-        EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
-        EXTRACT(MONTH FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN)) AS mo,
+        EXTRACT(YEAR FROM {dt})  AS yr,
+        EXTRACT(MONTH FROM {dt}) AS mo,
         COUNT(DISTINCT CLNT_NO)   AS unique_clients,
         COUNT(*)                  AS total_events
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Control = 'Action'
       AND Success = 1
-      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
+      AND {dt} >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 

@@ -181,6 +181,7 @@ select * from connection to teradata (
         SRVC_CD
     FROM DDWV05.CLNT_CRD_POS_LOG
     WHERE AMT1 > 0
+      AND TXN_TP IN (10, 13)
       AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
       AND SRVC_CD = 36
       AND TXN_DT >= DATE '2025-01-01'
@@ -205,6 +206,7 @@ select * from connection to teradata (
         SUM(AMT1)                   AS total_amount
     FROM DDWV05.CLNT_CRD_POS_LOG
     WHERE AMT1 > 0
+      AND TXN_TP IN (10, 13)
       AND SUBSTR(CLNT_CRD_NO, 1, 5) = '45190'
       AND SRVC_CD = 36
       AND TXN_DT >= DATE '2025-01-01'
@@ -361,6 +363,8 @@ select * from connection to teradata (
         EVNT_CRNCY_CD
     FROM DDWV01.EXT_CDS_CHNL_EVNT
     WHERE ACTVY_TYP_CD = '031'
+      AND CHNL_TYP_CD IN ('021','034')
+      AND SRC_DTA_STORE_CD IN ('139','140')
       AND CAPTR_DT >= DATE '2025-01-01'
     ORDER BY CAPTR_DT DESC
 
@@ -382,6 +386,8 @@ select * from connection to teradata (
         SUM(EVNT_AMT_CAD)            AS total_amt_cad
     FROM DDWV01.EXT_CDS_CHNL_EVNT
     WHERE ACTVY_TYP_CD = '031'
+      AND CHNL_TYP_CD IN ('021','034')
+      AND SRC_DTA_STORE_CD IN ('139','140')
       AND CAPTR_DT >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
@@ -557,15 +563,21 @@ select * from connection to teradata (
 
     SELECT TOP 10
         CLNT_NO,
-        COALESCE(DI_DT_OPEN, IE_DT_OPEN) AS SUCCESS_DT,
+        CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN
+             WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN
+             WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN
+             ELSE NULL END            AS SUCCESS_DT,
         DI_DT_OPEN,
         IE_DT_OPEN,
         Control,
         Success
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Success = 1
-      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
-    ORDER BY COALESCE(DI_DT_OPEN, IE_DT_OPEN) DESC
+      AND CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN
+               WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN
+               WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN
+               ELSE NULL END >= DATE '2025-01-01'
+    ORDER BY 2 DESC
 
 );
 disconnect from teradata;
@@ -578,13 +590,22 @@ proc sql;
 select * from connection to teradata (
 
     SELECT
-        EXTRACT(YEAR FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN))  AS yr,
-        EXTRACT(MONTH FROM COALESCE(DI_DT_OPEN, IE_DT_OPEN)) AS mo,
+        EXTRACT(YEAR FROM CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN
+                               WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN
+                               WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN
+                               ELSE NULL END)  AS yr,
+        EXTRACT(MONTH FROM CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN
+                                WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN
+                                WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN
+                                ELSE NULL END) AS mo,
         COUNT(DISTINCT CLNT_NO)   AS unique_clients,
         COUNT(*)                  AS total_events
     FROM dl_mr_prod.NBO_IDE_Acquisition
     WHERE Success = 1
-      AND COALESCE(DI_DT_OPEN, IE_DT_OPEN) >= DATE '2025-01-01'
+      AND CASE WHEN DI_DT_OPEN IS NULL THEN IE_DT_OPEN
+               WHEN IE_DT_OPEN IS NULL THEN DI_DT_OPEN
+               WHEN DI_DT_OPEN = IE_DT_OPEN THEN DI_DT_OPEN
+               ELSE NULL END >= DATE '2025-01-01'
     GROUP BY 1, 2
     ORDER BY 1, 2
 

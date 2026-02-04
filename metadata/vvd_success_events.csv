@@ -9,10 +9,10 @@ card_activation,123456789,555001,Digital Footprint,VVD,Virtual Visa Debit,,2025-
 card_activation,987654321,555002,Digital Footprint,VVD,Virtual Visa Debit,,2025-06-25,"{""sts_cd"":""08"",""srvc_id"":36}",2,product_activation,VDT,1
 card_activation,111222333,555003,Digital Footprint,VVD,Virtual Visa Debit,,2025-07-10,"{""sts_cd"":""06"",""srvc_id"":36}",2,product_activation,VDT,1
 card_activation,333444555,555007,Digital Footprint,VVD,Virtual Visa Debit,,2025-08-05,"{""sts_cd"":""06"",""srvc_id"":36}",2,product_activation,VDT,1
-card_usage,123456789,555001,Payments,VVD,Standard Purchase,45.99,2025-06-25,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUI,1
-card_usage,123456789,555001,Payments,VVD,E-commerce Purchase,129.00,2025-07-02,"{""txn_tp"":13,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUI,1
-card_usage,987654321,555002,Payments,VVD,Recurring / Subscription,14.99,2025-07-10,"{""txn_tp"":12,""msg_tp"":""0220"",""srvc_cd"":36}",3,product_usage,VUI,1
-card_usage,111222333,555003,Payments,VVD,Standard Purchase,67.50,2025-07-15,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUI,1
+card_usage,123456789,555001,Payments,VVD,Standard Purchase,45.99,2025-06-25,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36,""purchase"":true}",3,product_usage,VUI,1
+card_usage,123456789,555001,Payments,VVD,E-commerce Purchase,129.00,2025-07-02,"{""txn_tp"":13,""msg_tp"":""0210"",""srvc_cd"":36,""purchase"":true}",3,product_usage,VUI,1
+card_usage,987654321,555002,Payments,VVD,Standard Purchase,67.50,2025-07-10,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36,""purchase"":true}",3,product_usage,VUI,1
+card_usage,111222333,555003,Payments,VVD,Standard Purchase,67.50,2025-07-15,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36,""purchase"":true}",3,product_usage,VUI,1
 card_usage,444555666,555004,Payments,VVD,E-commerce Purchase,250.00,2025-12-05,"{""txn_tp"":13,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUT,2
 card_usage,777888999,555005,Payments,VVD,Standard Purchase,32.75,2025-12-10,"{""txn_tp"":10,""msg_tp"":""0210"",""srvc_cd"":36}",3,product_usage,VUT,2
 card_usage,333444555,555007,Payments,VVD,Recurring / Subscription,9.99,2025-08-20,"{""txn_tp"":12,""msg_tp"":""0220"",""srvc_cd"":36}",3,product_usage,VAW,2
@@ -23,18 +23,18 @@ wallet_provisioning,444555666,555004,Digital Footprint,VVD,Apple Pay,0,2025-12-0
 wallet_provisioning,777888999,555005,Digital Footprint,VVD,Samsung Pay,0,2025-12-08,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VUT,1
 wallet_provisioning,333444555,555007,Digital Footprint,VVD,Apple Pay,0,2025-08-12,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VAW,1
 wallet_provisioning,222333444,555006,Digital Footprint,VVD,Google Pay,0,2025-12-03,"{""token_wallet_ind"":""Y"",""bin"":""45190"",""pos_entry_mode"":""000"",""srvc_cd"":36}",4,digital_wallet,VAW,1
-imt_transaction,234567890,660001,Payments,IMT,International Remittance,1250.00,2025-08-10,"{""chnl_typ_cd"":""ONL"",""evnt_crncy_cd"":""CAD"",""actvy_typ_cd"":""031""}",5,product_action,IRI,1
-imt_transaction,345678901,660002,Payments,IMT,International Remittance,500.00,2025-09-15,"{""chnl_typ_cd"":""ONL"",""evnt_crncy_cd"":""USD"",""actvy_typ_cd"":""031""}",5,product_action,IRI,1
-imt_transaction,456789012,660003,Payments,IMT,International Remittance,3200.00,2025-10-22,"{""chnl_typ_cd"":""BRN"",""evnt_crncy_cd"":""CAD"",""actvy_typ_cd"":""031""}",5,product_action,IRI,1
+imt_transaction,234567890,660001,Payments,IMT,International Remittance,1250.00,2025-08-10,"{""chnl_typ_cd"":""021"",""evnt_crncy_cd"":""CAD"",""actvy_typ_cd"":""031"",""src_dta_store_cd"":""140""}",5,product_action,IRI,1
+imt_transaction,345678901,660002,Payments,IMT,International Remittance,500.00,2025-09-15,"{""chnl_typ_cd"":""034"",""evnt_crncy_cd"":""USD"",""actvy_typ_cd"":""031"",""src_dta_store_cd"":""139""}",5,product_action,IRI,1
+imt_transaction,456789012,660003,Payments,IMT,International Remittance,3200.00,2025-10-22,"{""chnl_typ_cd"":""021"",""evnt_crncy_cd"":""CAD"",""actvy_typ_cd"":""031"",""src_dta_store_cd"":""140""}",5,product_action,IRI,1
 overdraft_open,567890123,770001,Loans,Overdraft,Personal Overdraft Protection,,2025-07-12,"{""appl_for_prod_typ"":""OP"",""prod_sts_cd"":32}",1,product_open,O2P,1
 overdraft_open,678901234,770002,Loans,Overdraft,Personal Overdraft Protection,,2025-08-05,"{""appl_for_prod_typ"":""CR"",""prod_sts_cd"":37}",1,product_open,O2P,1
 overdraft_open,789012345,770003,Loans,Overdraft,Personal Overdraft Protection,,2025-09-18,"{""appl_for_prod_typ"":""AP"",""prod_sts_cd"":45}",1,product_open,O2P,1
 resp_open,890123456,880001,Investments,RESP,Registered Education Savings,,2025-06-20,"{""invstmt_pln_type"":8,""op_cls_sts"":""O"",""mif_srvc_id"":""RES""}",1,product_open,RAT,1
 resp_open,901234567,880002,Investments,RESP,Registered Education Savings,,2025-07-14,"{""invstmt_pln_type"":8,""op_cls_sts"":""O"",""mif_srvc_id"":""RES""}",1,product_open,RAT,1
 resp_open,112233445,880003,Investments,RESP,Registered Education Savings,,2025-08-30,"{""invstmt_pln_type"":8,""op_cls_sts"":""O"",""mif_srvc_id"":""RES""}",1,product_open,RAT,1
-di_open,223344556,990001,Investments,Direct Investing,Direct Investing,,2025-07-05,"{""di_dt_open"":""2025-07-05"",""ie_dt_open"":null}",1,product_open,IDE,1
-di_open,334455667,990002,Investments,Direct Investing,InvestEase,,2025-08-12,"{""di_dt_open"":null,""ie_dt_open"":""2025-08-12""}",1,product_open,IDE,1
-di_open,445566778,990003,Investments,Direct Investing,Direct Investing,,2025-09-25,"{""di_dt_open"":""2025-09-25"",""ie_dt_open"":null}",1,product_open,IDE,1
+di_open,223344556,990001,Investments,Direct Investing,Direct Investing,,2025-07-05,"{""di_dt_open"":""2025-07-05"",""ie_dt_open"":null,""date_logic"":""CASE: DI only""}",1,product_open,IDE,1
+di_open,334455667,990002,Investments,Direct Investing,InvestEase,,2025-08-12,"{""di_dt_open"":null,""ie_dt_open"":""2025-08-12"",""date_logic"":""CASE: IE only""}",1,product_open,IDE,1
+di_open,445566778,990003,Investments,Direct Investing,Direct Investing,,2025-09-25,"{""di_dt_open"":""2025-09-25"",""ie_dt_open"":""2025-09-25"",""date_logic"":""CASE: both equal""}",1,product_open,IDE,1
 gic_open,556677889,100001,Investments,GIC,GIC,,2025-06-30,"{""dt_open"":""2025-06-30"",""success"":1}",1,product_open,GIS,1
 gic_open,667788990,100002,Investments,GIC,GIC,,2025-08-15,"{""dt_open"":""2025-08-15"",""success"":1}",1,product_open,GIS,1
 gic_open,778899001,100003,Investments,GIC,GIC,,2025-10-01,"{""dt_open"":""2025-10-01"",""success"":1}",1,product_open,GIS,1
